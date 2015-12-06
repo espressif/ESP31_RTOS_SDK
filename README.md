@@ -26,7 +26,7 @@ git clone -b esp108-1.21.0 git://github.com/jcmvbkbc/crosstool-NG.git
 Step 5. Install toolchain.
 ```
 cd crosstool-NG
-./bootstrap && ./configure --prefix=`pwd` && make && make install 
+./bootstrap && ./configure --enable-local && make
 ./ct-ng xtensa-esp108-elf 
 ./ct-ng build
 ```
