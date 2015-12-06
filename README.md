@@ -34,7 +34,7 @@ Step 6. Set the PATH variable to point to the newly compiled toolchain.
 ```
 export PATH=/opt/Espressif/crosstool-NG/builds/xtensa-esp108-elf/bin:$PATH
 ```
-> Note： 
+> Note: 
 You need to do Step 6 once you open a new shell, or you can put it inside your .bashrc file
   
 ## Project template Compile ##
@@ -54,14 +54,14 @@ cp ~/Workspace/ESP32_RTOS_SDK/examples/project_template ~/Workspace/ -r
 ```
 Step 4. Create a directory (e.g.~/Workspace/ESP32_BIN) to store the bin files compiled.
 ```
-mkdir –p ~/Workspace/ESP32_BIN
+mkdir -p ~/Workspace/ESP32_BIN
 ```
 Step 5. Set SDK_PATH as the path of SDK files and BIN_PATH as the path of .bin files compiled.
 ```
 export SDK_PATH=~/Workspace/ESP32_RTOS_SDK 
 export BIN_PATH=~/Workspace/ESP32_BIN
 ```
-> Notice： 
+> Notice: 
 > Make sure you set the correct paths, or it will occur a compile error.
 
 Step 6. Start to compile files
@@ -69,7 +69,7 @@ Step 6. Start to compile files
 make clean
 make
 ```
-> Note： 
+> Note: 
 You need to do Step 3 every time you open a new shell, or you can put it inside your .bashrc file.
 
 If your project is successfully compiled, the irom1.bin, irom0_flash.bin, and user.ota files will 
