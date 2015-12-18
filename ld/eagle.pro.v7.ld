@@ -1,25 +1,23 @@
-/* eagle.flash.bin     @ 0x00000 */
-/* eagle.irom0text.bin @ 0x40000 */
+/* boot.bin        @ 0x00000 */
+/* irom1.bin       @ 0xX4000 */
+/* irom0_flash.bin @ 0xX0000+0x40000 */
 
-/* Flash Map, support 512KB/1MB/2MB/4MB SPI Flash */
-/* |......|..............................|..........................|.....|....|                       */
-/* ^      ^                              ^                          ^     ^                            */
-/* |_flash.bin start(0x0000)             |_irom0text.bin start(0x40000)   |                            */
-/*        |_flash.bin end                                           |_irom0text.bin end                */
-/*                                                                        |_system param area(0x7b000) */
+/* Flash Map */
+/* |..|...............|...........................................|..|            */
+/* ^  ^               ^                                           ^               */
+/* |_boot.bin(0x0000) |_irom0_flash.bin(0xX0000+0x40000)          |               */
+/*    |_irom1.bin(0xX4000)                                        |_system param area(Flash size - 0x4000) */
 
 /* NOTICE: */ 
-/* 1. You can change irom0 org, but MUST make sure irom0text.bin start not overlap flash.bin end.   */
-/* 2. You can change irom0 len, but MUST make sure irom0text.bin end not overlap system param area. */
-/* 3. Space between flash.bin end and irom0text.bin start can be used as user param area.           */
-/* 4. Space between irom0text.bin end and system param area can be used as user param area.         */
-/* 5. Make sure irom0text.bin end < 0x100000                                                        */
-/* 6. system param area:                                                                            */
-/*    1>. 512KB--->0x07b000                                                                         */
-/*    2>. 1MB----->0x0fb000                                                                         */
-/*    3>. 2MB----->0x1fb000                                                                         */
-/*    4>. 4MB----->0x3fb000                                                                         */
-/* 7. Don't change any other seg.                                                                   */
+/* 1. irom1.bin + irom0_flash.bin = user.ota                                    */
+/* 2. irom1.bin and irom0_flash.bin must locate at 0xX4000 and 0xX0000+0x40000, */
+/*    here 0xX0000 must 256KB align.                                            */
+/* 3. Make sure each user.ota not overlap other.                                */
+/* 4. Make sure each user.ota not overlap system param area or user param area. */
+/* 5. We support a maximum of 5 user.ota                                        */
+/* 6. We support 1MB/2MB/4MB/8MB/16MB flash,                               */
+/*    but make suer user.ota not exceed 16MB.                                   */
+/* 7. Don't change any seg.                                                     */
 
 MEMORY
 {

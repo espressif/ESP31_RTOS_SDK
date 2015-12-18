@@ -3,19 +3,19 @@ PROVIDE ( Cache_Read_Enable = 0x4000438c );
 
 PROVIDE ( ets_delay_us = 0x40002db4 );
 
-PROVIDE ( ets_bzero = 0x40002a54 );
+PROVIDE ( bzero = 0x40002a54 );
 
-PROVIDE ( ets_memcmp = 0x40001de4 );
-PROVIDE ( ets_memcpy = 0x40001dc4 );
-PROVIDE ( ets_memmove = 0x40001dd4 );
-PROVIDE ( ets_memset = 0x40001db4 );
+PROVIDE ( memcmp = 0x400068ec );
+PROVIDE ( memcpy = 0x40006974 );
+PROVIDE ( memmove = 0x40006a6c );
+PROVIDE ( memset = 0x40006be4 );
 
-PROVIDE ( ets_strcmp = 0x40002a10 );
-PROVIDE ( ets_strcpy = 0x400029ec );
-PROVIDE ( ets_strlen = 0x40002a34 );
-PROVIDE ( ets_strncmp = 0x40002a24 );
-PROVIDE ( ets_strncpy = 0x40002a00 );
-PROVIDE ( ets_strstr = 0x40002a40 );
+PROVIDE ( strcmp = 0x40005bb8 );
+PROVIDE ( strcpy = 0x40005cdc );
+PROVIDE ( strlen = 0x40005d6c );
+PROVIDE ( strncmp = 0x40005dd0 );
+PROVIDE ( strncpy = 0x40005e90 );
+PROVIDE ( strstr = 0x40005f6c );
 
 PROVIDE ( ets_install_putc1 = 0x40002774 );
 PROVIDE ( ets_printf = 0x40002804 );
@@ -33,6 +33,8 @@ PROVIDE ( lldesc_build_chain = 0x40004c8c );
 
 PROVIDE ( multofup = 0x400068a0 );
 PROVIDE ( roundup2 = 0x40006890 );
+
+PROVIDE (software_reset_cpu = 0x40002998 );
 
 PROVIDE ( SPIEraseSector = 0x40004708 );
 PROVIDE ( SPIRead = 0x40004898 );

@@ -32,7 +32,6 @@
 #include "gpio.h"
 #include <stdio.h>
 
-#define os_printf printf
 #define IIS_RX_BUF_LEN  512  //unit Byte
 #define IIS_TX_BUF_LEN  512  //unit Byte
 #define n  2
@@ -155,7 +154,7 @@ void copyarray(uint8 *dest, uint8 *src, uint32 nbyte)
 
 //create DMA buffer descriptors, unit of either size or length here is byte.
 //More details in I2S documents.
-void creat_one_link(uint8 own, uint8 eof, uint8 sub_sof, uint16 size, uint16 length,
+void create_one_link(uint8 own, uint8 eof, uint8 sub_sof, uint16 size, uint16 length,
                     uint32 *buf_ptr, struct sdio_queue *nxt_ptr, struct sdio_queue *i2s_queue)
 {
     unsigned int link_data0;
@@ -441,7 +440,7 @@ void slc_isr(void *para)
         if (READ_PERI_REG(I2S_TX_EOF_DES_ADDR) == (((uint32)&i2s_tx_queue1))) {
             //load out data in the buff
             if (tx_cnt < 4 * n) {
-                ets_memcpy((uint8 *)i2s_tx_test + IIS_TX_BUF_LEN * tx_cnt, (uint8 *)i2s_tx_buff1, IIS_TX_BUF_LEN);
+                memcpy((uint8 *)i2s_tx_test + IIS_TX_BUF_LEN * tx_cnt, (uint8 *)i2s_tx_buff1, IIS_TX_BUF_LEN);
             }
 
             //reset DMA discrpiter
@@ -451,7 +450,7 @@ void slc_isr(void *para)
             i2s_tx_queue1.datalen = 0;
         } else if (READ_PERI_REG(I2S_TX_EOF_DES_ADDR) == (((uint32)&i2s_tx_queue2))) {
             if (tx_cnt < 4 * n) {
-                ets_memcpy((uint8 *)i2s_tx_test + IIS_TX_BUF_LEN * tx_cnt, (uint8 *)i2s_tx_buff2, IIS_TX_BUF_LEN);
+                memcpy((uint8 *)i2s_tx_test + IIS_TX_BUF_LEN * tx_cnt, (uint8 *)i2s_tx_buff2, IIS_TX_BUF_LEN);
             }
 
             i2s_tx_queue2.next_link_ptr = (uint32)(&i2s_tx_queue3);
@@ -460,7 +459,7 @@ void slc_isr(void *para)
             i2s_tx_queue2.datalen = 0;
         } else if (READ_PERI_REG(I2S_TX_EOF_DES_ADDR) == (((uint32)&i2s_tx_queue3))) {
             if (tx_cnt < 4 * n) {
-                ets_memcpy((uint8 *)i2s_tx_test + IIS_TX_BUF_LEN * tx_cnt, (uint8 *)i2s_tx_buff3, IIS_TX_BUF_LEN);
+                memcpy((uint8 *)i2s_tx_test + IIS_TX_BUF_LEN * tx_cnt, (uint8 *)i2s_tx_buff3, IIS_TX_BUF_LEN);
             }
 
             i2s_tx_queue3.next_link_ptr = (uint32)(&i2s_tx_queue1);
@@ -508,12 +507,12 @@ void i2s_test(void)
     //size of the I2S FIFO.
     //Note:At the receiver side,the number of the DMAs can not be smaller than 3 which is limited by the
     //hardware.
-    creat_one_link(1, 0, 0, IIS_TX_BUF_LEN, 0, i2s_tx_buff1, &i2s_tx_queue2, &i2s_tx_queue1);
-    creat_one_link(1, 0, 0, IIS_TX_BUF_LEN, 0, i2s_tx_buff2, &i2s_tx_queue3, &i2s_tx_queue2);
-    creat_one_link(1, 0, 0, IIS_TX_BUF_LEN, 0, i2s_tx_buff3, &i2s_tx_queue1, &i2s_tx_queue3);
+    create_one_link(1, 0, 0, IIS_TX_BUF_LEN, 0, i2s_tx_buff1, &i2s_tx_queue2, &i2s_tx_queue1);
+    create_one_link(1, 0, 0, IIS_TX_BUF_LEN, 0, i2s_tx_buff2, &i2s_tx_queue3, &i2s_tx_queue2);
+    create_one_link(1, 0, 0, IIS_TX_BUF_LEN, 0, i2s_tx_buff3, &i2s_tx_queue1, &i2s_tx_queue3);
 
-    creat_one_link(1, 1, 0, IIS_RX_BUF_LEN, IIS_RX_BUF_LEN, i2s_rx_buff1, &i2s_rx_queue2, &i2s_rx_queue1);
-    creat_one_link(1, 1, 0, IIS_RX_BUF_LEN, IIS_RX_BUF_LEN, i2s_rx_buff2, &i2s_rx_queue1, &i2s_rx_queue2);
+    create_one_link(1, 1, 0, IIS_RX_BUF_LEN, IIS_RX_BUF_LEN, i2s_rx_buff1, &i2s_rx_queue2, &i2s_rx_queue1);
+    create_one_link(1, 1, 0, IIS_RX_BUF_LEN, IIS_RX_BUF_LEN, i2s_rx_buff2, &i2s_rx_queue1, &i2s_rx_queue2);
 
     os_printf("================DMA descripter built==============\r\n");
 

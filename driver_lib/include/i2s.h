@@ -91,7 +91,7 @@ void i2s_GPIO_init(uint8 mode);
   *
   * @attention This API can be called only once per mode.
   *
-  * @param     null;
+  * @param     null
   *
   * @return    null
   */
@@ -102,14 +102,14 @@ void i2s_init(void);
   *
   * @attention This API can be called only once per mode.
   *
-  * @param     null;
+  * @param     null
   *
   * @return    null
   */
 void slc_init(void);
 
 /**
-  * @brief     process data received/treansmitted when interrupt occurs.
+  * @brief     Process data received/treansmitted when interrupt occurs.
   *
   * @attention This API can be called only once per mode.
   *
@@ -120,24 +120,24 @@ void slc_init(void);
 void slc_isr(void *para);
 
 /**
-  * @brief     create DMA buffer descriptors.
+  * @brief     Create DMA buffer descriptors.
   *
-  * @param     uint8 own: select the owner of the current link to be either software or hardware
-  * @param     uint8 eof: mark for end of file
-  * @param     uint8 sub_sof: mark for sub start of file
-  * @param     uint16 size: the actual size of the buffer
-  * @param     uint16 length: the total size of the buffer
-  * @param     uint32* buf_ptr: the start address of the buffer
-  * @param     struct sdio_queue* nxt_ptr: the address of the next descriptor
-  * @param     struct sdio_queue* i2s_queue: the address of the current descriptor
+  * @param     uint8 own : select the owner of the current link to be either software or hardware
+  * @param     uint8 eof : mark for end of file
+  * @param     uint8 sub_sof : mark for sub start of file
+  * @param     uint16 size : the actual size of the buffer
+  * @param     uint16 length : the total size of the buffer
+  * @param     uint32* buf_ptr : the start address of the buffer
+  * @param     struct sdio_queue* nxt_ptr : the address of the next descriptor
+  * @param     struct sdio_queue* i2s_queue : the address of the current descriptor
   *
   * @return    null
   */
-void creat_one_link(uint8 own, uint8 eof, uint8 sub_sof, uint16 size, uint16 length,
+void create_one_link(uint8 own, uint8 eof, uint8 sub_sof, uint16 size, uint16 length,
                     uint32 *buf_ptr, struct sdio_queue *nxt_ptr, struct sdio_queue *i2s_queue);
 
 /**
-  * @brief     functional DEMO for i2s module.
+  * @brief     Functional DEMO for i2s module.
   *
   * @param     null
   *

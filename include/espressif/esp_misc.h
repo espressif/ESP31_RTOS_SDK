@@ -27,6 +27,9 @@
 
 #include "lwip/ip_addr.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -57,27 +60,30 @@ void ets_putc(char c);
 
 void ets_printf(const char *fmt, ...);
 
-void *ets_memset(void *dest, int val, unsigned int nbyte);
+#define os_delay_us ets_delay_us
 
-void *ets_memcpy(void *dest, const void *src, unsigned int nbyte);
+#define os_install_putc1 ets_install_putc1
 
-void *ets_memmove(void *dest, const void *src, unsigned int nbyte);
+#define os_putc ets_putc
 
-int ets_memcmp(const void *string1, const void *string2, unsigned int nbyte);
+extern SemaphoreHandle_t stdio_mutex_tx;
 
-char *ets_strcpy(char *s1, const char *s2);
+#ifdef USE_LIBC_PRINTF
+#define printf_call printf
+#else
+#define printf_call ets_printf
+#endif
 
-char *ets_strncpy(char *s1, const char *s2, unsigned int n);
+#define os_printf(fmt, ...) do {    \
+        xSemaphoreTake(stdio_mutex_tx, portMAX_DELAY);  \
+        printf_call(fmt, ##__VA_ARGS__); \
+        xSemaphoreGive(stdio_mutex_tx); \
+    } while(0)
 
-int ets_strcmp(const char *s1, const char *s2);
-
-int ets_strncmp(const char *s1, const char *s2, unsigned int n);
-
-int ets_strlen(const char *s);
-
-char *ets_strstr(const char *, const char *);
-
-void ets_bzero(void *, size_t);
+#define os_printf_isr(fmt, ...) do {    \
+        static const char ram_str[] DRAM_ATTR STORE_ATTR = fmt;  \
+        ets_printf(ram_str, ##__VA_ARGS__);   \
+    } while(0)
 
 enum dhcp_status {
     DHCP_STOPPED,   /**< disable DHCP */
@@ -95,6 +101,10 @@ enum dhcps_offer_option {
     OFFER_ROUTER = 0x01,        /**< DHCP offer router, only support this option now */
     OFFER_END                   /**< DHCP offer option start */
 };
+
+unsigned long os_random(void);
+
+int os_get_random(uint8* buf, size_t len);
 
 /**
   * @}

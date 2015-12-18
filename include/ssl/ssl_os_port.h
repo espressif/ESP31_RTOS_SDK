@@ -95,6 +95,26 @@ static __inline__ uint64 be64toh(uint64 __x) {return (((uint64)be32toh(__x & (ui
 #define SSL_CTX_LOCK(A)
 #define SSL_CTX_UNLOCK(A)
 
+void *ax_malloc(size_t s, const char* file, int line);
+void *ax_realloc(void *y, size_t s, const char* file, int line);
+void *ax_calloc(size_t n, size_t s, const char* file, int line);
+void *ax_zalloc(size_t s, const char* file, int line);
+void ax_free(void *p, const char* file, int line);
+
+#if 1
+#define SSL_MALLOC(size) 		  ax_malloc(size, __FILE__, __LINE__)
+#define SSL_REALLOC(mem_ref,size) ax_realloc(mem_ref, size, __FILE__, __LINE__)
+#define SSL_CALLOC(element, size) ax_calloc(element, size, __FILE__, __LINE__)
+#define SSL_ZALLOC(size) 		  ax_zalloc(size, __FILE__, __LINE__)
+#define SSL_FREE(mem_ref) 	 	  ax_free(mem_ref, __FILE__, __LINE__)
+#else
+#define SSL_MALLOC(size) 		  malloc(size)
+#define SSL_REALLOC(mem_ref,size) realloc(mem_ref, size)
+#define SSL_CALLOC(element, size) calloc(element, size)
+#define SSL_ZALLOC(size) 		  malloc(size)
+#define SSL_FREE(mem_ref) 	 	  free(mem_ref)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

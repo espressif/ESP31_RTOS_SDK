@@ -20,6 +20,8 @@ else
     OBJDUMP = xtensa-esp108-elf-objdump
 endif
 
+BIN_PATH ?= $(SDK_PATH)/bin
+
 LD_FILE = $(LDDIR)/eagle.pro.v7.ld
 BIN_NAME = user
 
@@ -96,8 +98,15 @@ $$(IMAGEODIR)/$(1).out: $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1)) $$(DEPENDS_
 	$$(CC) $$(LDFLAGS) $$(if $$(LINKFLAGS_$(1)),$$(LINKFLAGS_$(1)),$$(LINKFLAGS_DEFAULT) $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1))) -o $$@ 
 endef
 
+define CheckBinPath
+if test ! -d $(BIN_PATH); then \
+echo "BIN_PATH : $(BIN_PATH) not EXIST, creat it!";	\
+mkdir -p $(BIN_PATH);	\
+fi;
+endef
+
 $(BINODIR)/%.bin: $(IMAGEODIR)/%.out
-	@mkdir -p $(BINODIR)
+	@$(CheckBinPath)
 
 	@$(RM) -r $(BIN_PATH)/$(BIN_NAME).S $(BIN_PATH)/$(BIN_NAME).dump
 

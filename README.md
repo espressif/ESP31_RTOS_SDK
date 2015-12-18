@@ -66,6 +66,7 @@ export BIN_PATH=~/Workspace/ESP32_BIN
 
 Step 6. Start to compile files
 ```
+cd ~/Workspace/project_template
 make clean
 make
 ```

@@ -132,12 +132,23 @@ typedef struct {
   * @{
   */
 
+
+/**
+  * @brief   Set UART baud rate.
+  *
+  * Example : uart_div_modify(uart_no, UART_CLK_FREQ / (UartDev.baut_rate));
+  *
+  * @param   UART_Port uart_no : UART0 or UART1
+  * @param   uint16 div : frequency divider 
+  *
+  * @return  null
+  */
 void uart_div_modify(UART_Port uart_no, uint16 div);
 
 /**
   * @brief   Wait uart tx fifo empty, do not use it if tx flow control enabled.
   *
-  * @param   UART_Port uart_no:UART0 or UART1
+  * @param   UART_Port uart_no : UART0 or UART1
   *
   * @return  null
   */

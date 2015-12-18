@@ -41,6 +41,10 @@
  *    - Software timer APIs : Software timer APIs
  *    - Driver APIs : Driver APIs
    *    - SPI Driver APIs : SPI Flash APIs
+   *    - GPIO Driver APIs : GPIO APIs
+   *    - I2S Driver APIs : I2S APIs
+   *    - PWM Driver APIs : PWM APIs
+   *    - UART Driver APIs : UART APIs
  *
   * void user_init(void) is the entrance function of the application.
   * @attention 1. It is recommended that users set the timer to the periodic mode

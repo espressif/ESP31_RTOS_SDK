@@ -269,7 +269,7 @@ void gpio_config(GPIO_ConfigTypeDef *pGPIOConfig);
     ((gpio_input_get() >> gpio_no) & BIT0) : ((gpio_input_get_high() >> (gpio_no - 32)) & BIT0))
 
 /**
-  * @brief   Configure Gpio pins out or input.
+  * @brief   Configure GPIO pins out or input.
   *
   * @param   uint32 set_mask     : Set the output for the high bit, the
   *                                corresponding bit is 1, the output of high,
@@ -285,7 +285,7 @@ void gpio_config(GPIO_ConfigTypeDef *pGPIOConfig);
 void gpio_output_conf(uint32 set_mask, uint32 clear_mask, uint32 enable_mask, uint32 disable_mask);
 
 /**
-  * @brief   Configure Gpio pins out or input.
+  * @brief   Configure GPIO pins out or input.
   *
   * @param   uint32 set_mask     : Set the output for the high bit, the
   *                                corresponding bit is 1, the output of high,
@@ -313,7 +313,7 @@ void gpio_intr_handler_register(void *fn, void *arg);
 /**
   * @brief   Configure GPIO wake up to light sleep,Only level way is effective.
   *
-  * @param   uint32 i : Gpio sequence number
+  * @param   uint32 i : GPIO sequence number
   * @param   GPIO_INT_TYPE intr_state : the level of wake up to light sleep
   *
   * @return  null
@@ -340,7 +340,7 @@ void gpio_pin_wakeup_disable(void);
 void gpio_pin_intr_state_set(uint32 i, GPIO_INT_TYPE intr_state);
 
 /**
-  * @brief   Sample the value of GPIO input pins and returns a bitmask,This function only get the level  GPIO0-GPIO31.
+  * @brief   Sample the value of GPIO input pins and returns a bitmask. This function only get the level GPIO0-GPIO31.
   *
   * @param   null
   *
@@ -349,7 +349,7 @@ void gpio_pin_intr_state_set(uint32 i, GPIO_INT_TYPE intr_state);
 uint32 gpio_input_get(void);
 
 /**
-  * @brief   Sample the value of GPIO input pins and returns a bitmask,This function only get the level  GPIO32-GPIO39.
+  * @brief   Sample the value of GPIO input pins and returns a bitmask. This function only get the level GPIO32-GPIO39.
   *
   * @param   null
   *
@@ -358,38 +358,38 @@ uint32 gpio_input_get(void);
 uint32 gpio_input_get_high(void);
 
 /**
-  * @brief   Enable gpio sigmadelta function.
+  * @brief   Enable GPIO sigmadelta function.
   *
-  * @param   uint32 gpio_num  : The GPIO sequence number.
-  *          uint32 sigma_num : the sigmadelta source sequence number 0-7.
-  *          uint32 prescale  : Clock divide factor.
+  * @param   uint32 gpio_num    : The GPIO sequence number.
+  * @param   uint32 sigma_num  : the sigmadelta source sequence number 0-7.
+  * @param   uint32 prescale      : Clock divide factor.
   *
   * @return   null
   */
 void gpio_output_sigmadelta_enable(uint32 gpio_num, uint32 sigma_num, uint32 prescale);
 
 /**
-  * @brief   Disable gpio sigmadelta function.
+  * @brief   Disable GPIO sigmadelta function.
   *
-  * @param   null
+  * @param   uint32 gpio_num    : The GPIO sequence number
   *
   * @return  null
   */
-void gpio_output_sigmadelta_disable(void);
+void gpio_output_sigmadelta_disable(uint32 gpio_num);
 
 /**
   * @brief   Configure GPIO interrupr.
   *
   * @param   uint32 gpio_num         : The GPIO sequence number.
-  *          uint32 intr_num         : the interrupt  source sequence number 0-7.
-  *          GPIO_INT_TYPE intr_type : The type of interrupt.
+  * @param   uint32 intr_num          : the interrupt  source sequence number 0-7.
+  * @param   GPIO_INT_TYPE intr_type : The type of interrupt.
   *
   * @return  null
   */
 void gpio_intr_config(uint32 gpio_num, uint32 intr_num, GPIO_INT_TYPE intr_type);
 
 /**
-  * @brief   The Gpio interrupt function.
+  * @brief   The GPIO interrupt function.
   *
   * @param   null
   *
@@ -401,7 +401,7 @@ void gpio_intr_process(void);
   * @brief   To bind GPIO input and a certain road input signal.
   *
   * @param   uint32 gpio_num   : The GPIO sequence number.
-  *          uint32 signal_idx : input signal sequence number.
+  * @param   uint32 signal_idx   : input signal sequence number.
   *
   * @return  null
   */
@@ -411,7 +411,7 @@ void gpio_matrix_in(uint32 gpio, uint32 signal_idx);
   * @brief   To bind GPIO ouput and a certain road output signal.
   *
   * @param   uint32 gpio_num   : The GPIO sequence number.
-  *          uint32 signal_idx : out signal sequence number.
+  * @param   uint32 signal_idx   : out signal sequence number.
   *
   * @return  null
   */
@@ -421,7 +421,7 @@ void gpio_matrix_out(uint32 gpio, uint32 signal_idx);
   * @brief   To bind mode interrupt and interrupt sequence number.
   *
   * @param   uint32 model_num : The mode sequence number.
-  *          uint32 intr_num  : interrupt sequence number.
+  * @param   uint32 intr_num     : interrupt sequence number.
   *
   * @return  null
   */

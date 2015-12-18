@@ -29,6 +29,7 @@
 
 #include "espressif/esp_common.h"
 #include "uart.h"
+#include "gpio.h"
 #include <stdio.h>
 
 enum {
@@ -276,9 +277,9 @@ void UART_intr_handler_register(void *fn, void *arg)
 void UART_SetPrintPort(UART_Port uart_no)
 {
     if (uart_no == 1) {
-        ets_install_putc1(uart1_write_char);
+        os_install_putc1(uart1_write_char);
     } else {
-        ets_install_putc1(uart0_write_char);
+        os_install_putc1(uart0_write_char);
     }
 }
 
@@ -310,7 +311,7 @@ void UART_IntrConfig(UART_Port uart_no,  UART_IntrConfTypeDef *pUARTIntrConf)
 
     uint32 reg_val = 0;
     UART_ClearIntrStatus(uart_no, UART_INTR_MASK);
-    reg_val = READ_PERI_REG(UART_CONF1(uart_no)) & ~((UART_RX_FLOW_THRHD << UART_RX_FLOW_THRHD_S) | UART_RX_FLOW_EN) ;
+    reg_val = READ_PERI_REG(UART_CONF1(uart_no));
 
     reg_val |= ((pUARTIntrConf->UART_IntrEnMask & UART_RXFIFO_TOUT_INT_ENA) ?
                 ((((pUARTIntrConf->UART_RX_TimeOutIntrThresh)&UART_RX_TOUT_THRHD) << UART_RX_TOUT_THRHD_S) | UART_RX_TOUT_EN) : 0);
@@ -334,15 +335,15 @@ LOCAL void uart0_rx_intr_handler(void *para)
     uint8 uart_no = UART0;//UartDev.buff_uart_no;
     uint8 fifo_len = 0;
     uint8 buf_idx = 0;
-
+    //BaseType_t xHigherPriorityTaskWoken;
     uint32 uart_intr_status = READ_PERI_REG(UART_INT_ST(uart_no)) ;
 
     while (uart_intr_status != 0x0) {
         if (UART_FRM_ERR_INT_ST == (uart_intr_status & UART_FRM_ERR_INT_ST)) {
-            ets_printf("FRM_ERR\r\n");
+            os_printf_isr("FRM_ERR\r\n");
             WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_FRM_ERR_INT_CLR);
         } else if (UART_RXFIFO_FULL_INT_ST == (uart_intr_status & UART_RXFIFO_FULL_INT_ST)) {
-            ets_printf("full\r\n");
+            os_printf_isr("full\r\n");
             fifo_len = (READ_PERI_REG(UART_STATUS(UART0)) >> UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT;
             buf_idx = 0;
 
@@ -352,8 +353,13 @@ LOCAL void uart0_rx_intr_handler(void *para)
             }
 
             WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
+            //CLEAR_PERI_REG_MASK(UART_INT_ENA(UART0), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_TOUT_INT_ENA);
+            //xQueueSendFromISR(QueUart,(&fifo_len),&xHigherPriorityTaskWoken) ;
+	     // portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+		//os_printf_isr("uart interrupt\n");
+		 
         } else if (UART_RXFIFO_TOUT_INT_ST == (uart_intr_status & UART_RXFIFO_TOUT_INT_ST)) {
-            ets_printf("tout\r\n");
+            os_printf_isr("tout\r\n");
             fifo_len = (READ_PERI_REG(UART_STATUS(UART0)) >> UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT;
             buf_idx = 0;
 
@@ -364,12 +370,12 @@ LOCAL void uart0_rx_intr_handler(void *para)
 
             WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_TOUT_INT_CLR);
         } else if (UART_TXFIFO_EMPTY_INT_ST == (uart_intr_status & UART_TXFIFO_EMPTY_INT_ST)) {
-            ets_printf("empty\n\r");
+            os_printf_isr("empty\n\r");
             WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_TXFIFO_EMPTY_INT_CLR);
             CLEAR_PERI_REG_MASK(UART_INT_ENA(UART0), UART_TXFIFO_EMPTY_INT_ENA);
         } else if (UART_RXFIFO_OVF_INT_ST  == (READ_PERI_REG(UART_INT_ST(uart_no)) & UART_RXFIFO_OVF_INT_ST)) {
             WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_RXFIFO_OVF_INT_CLR);
-            ets_printf("RX OVF!!\r\n");
+            os_printf_isr("RX OVF!!\r\n");
         } else {
             //skip
         }
