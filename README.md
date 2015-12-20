@@ -26,7 +26,7 @@ git clone -b esp108-1.21.0 git://github.com/jcmvbkbc/crosstool-NG.git
 Step 5. Install toolchain.
 ```
 cd crosstool-NG
-./bootstrap && ./configure --prefix=`pwd` && make && make install 
+./bootstrap && ./configure --enable-local && make
 ./ct-ng xtensa-esp108-elf 
 ./ct-ng build
 ```
@@ -35,7 +35,7 @@ Step 6. Set the PATH variable to point to the newly compiled toolchain.
 export PATH=/opt/Espressif/crosstool-NG/builds/xtensa-esp108-elf/bin:$PATH
 ```
 > Note： 
-You need to do Step 6 once you open a new shell, or you can put it inside your .bashrc file
+You need to do Step 6 every time you open a new shell, or you can put it inside your .bashrc file
   
 ## Project template Compile ##
 
@@ -48,21 +48,21 @@ Step 2. Clone ESP32 RTOS SDK.
 cd ~/Workspace
 git clone https://github.com/espressif/ESP32_RTOS_SDK.git
 ```
-Step 3. Copy ESP32_RTOS_SDK/examples/project_template to Workspace directory created in Step 1.
+Step 3. Copy ESP32_RTOS_SDK/examples/project_template to the Workspace directory created in Step 1.
 ```
 cp ~/Workspace/ESP32_RTOS_SDK/examples/project_template ~/Workspace/ -r
 ```
-Step 4. Create a directory (e.g.~/Workspace/ESP32_BIN) to store the bin files compiled.
+Step 4. Create a directory (e.g.~/Workspace/ESP32_BIN) to store the compiled bin files.
 ```
 mkdir –p ~/Workspace/ESP32_BIN
 ```
-Step 5. Set SDK_PATH as the path of SDK files and BIN_PATH as the path of .bin files compiled.
+Step 5. Set SDK_PATH as the path of SDK files and BIN_PATH as the path of compiled .bin files.
 ```
 export SDK_PATH=~/Workspace/ESP32_RTOS_SDK 
 export BIN_PATH=~/Workspace/ESP32_BIN
 ```
 > Notice： 
-> Make sure you set the correct paths, or it will occur a compile error.
+> Make sure you set the correct paths, or compile errors will occur.
 
 Step 6. Start to compile files
 ```
