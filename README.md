@@ -71,7 +71,7 @@ make clean
 make
 ```
 > Note： 
-You need to do Step 3 every time you open a new shell, or you can put it inside your .bashrc file.
+You need to do Step 5 every time you open a new shell, or you can put it inside your .bashrc file.
 
 If your project is successfully compiled, the irom1.bin, irom0_flash.bin, and user.ota files will 
 be generated in ~/Workspace/ESP32_BIN directory. 
