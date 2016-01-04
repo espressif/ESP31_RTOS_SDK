@@ -121,7 +121,7 @@ $(BINODIR)/%.bin: $(IMAGEODIR)/%.out
 
 	@rm -f irom0_flash.bin irom1.bin
 
-	@python $(SDK_PATH)/tools/gen_appbin.py  $< $(SDK_PATH)/ld
+	@python2 $(SDK_PATH)/tools/gen_appbin.py  $< $(SDK_PATH)/ld
 
 	@mv eagle.app.flash.bin $(BIN_PATH)/$(BIN_NAME).ota
 
