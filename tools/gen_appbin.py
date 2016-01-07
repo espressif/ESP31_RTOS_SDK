@@ -237,7 +237,8 @@ def gen_appbin():
         write_file(flash_bin_name,data_bin)
         #write_file(Icache_flash_bin_name,data_bin)
         # irom0.text.bin
-        combine_bin(irom0text_bin_name,flash_bin_name,irom0_len,0)
+        icache_flash_size = data_len +  os.path.getsize(text_bin_name) + os.path.getsize(data_bin_name) + os.path.getsize(rodata_bin_name) + 36
+        combine_bin(irom0text_bin_name,flash_bin_name,icache_flash_size,0)
         #combine_bin(irom0text_bin_name,Icache_flash_bin_name,0x0,0)     
 
     # text.bin

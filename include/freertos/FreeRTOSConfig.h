@@ -134,8 +134,8 @@
 #define configTOTAL_HEAP_SIZE			(&_end - &_heap_sentry)//( ( size_t ) (64 * 1024) )
 
 #define configMAX_TASK_NAME_LEN			( 16 )
-#define configUSE_TRACE_FACILITY		0		/* Used by vTaskList in main.c */
-#define configUSE_STATS_FORMATTING_FUNCTIONS	0	/* Used by vTaskList in main.c */
+#define configUSE_TRACE_FACILITY		1		/* Used by vTaskList in main.c */
+#define configUSE_STATS_FORMATTING_FUNCTIONS	1	/* Used by vTaskList in main.c */
 #define configUSE_TRACE_FACILITY_2      0		/* Provided by Xtensa port patch */
 #define configBENCHMARK					0		/* Provided by Xtensa port patch */
 #define configUSE_16_BIT_TICKS			0
@@ -145,7 +145,7 @@
 #define configUSE_MUTEXES				1
 #define configUSE_RECURSIVE_MUTEXES		1
 #define configUSE_COUNTING_SEMAPHORES	1
-#define configCHECK_FOR_STACK_OVERFLOW	0
+#define configCHECK_FOR_STACK_OVERFLOW	1
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 			0

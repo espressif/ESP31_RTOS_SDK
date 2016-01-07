@@ -89,12 +89,11 @@ typedef enum {
 #define __packed            __attribute__((packed))
 #define STORE_ATTR          __attribute__((aligned(4)))
 
-#define SHMEM_ATTR
 #define ICACHE_FLASH_ATTR
-
-#define DMEM_ATTR           __attribute__((section(".bss")))
-#define IRAM_ATTR           __attribute__((section(".text")))
 #define ICACHE_RODATA_ATTR  __attribute__((section(".irom.text")))
+
+#define IRAM_ATTR           __attribute__((section(".text")))
+#define DRAM_ATTR           __attribute__((section(".data")))
 
 #ifndef __cplusplus
 #define BOOL            bool

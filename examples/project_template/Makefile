@@ -117,4 +117,12 @@ sinclude $(SDK_PATH)/Makefile
 
 .PHONY: FORCE
 FORCE:
-
+	@if test -z $(SDK_PATH); then	\
+		echo "Please export SDK_PATH firstly!!!";	\
+		exit 1;	\
+	else	\
+		if test ! -d $(SDK_PATH)/include/espressif/esp32; then \
+			echo "$(SDK_PATH) is not a ESP32_RTOS_SDK path, please check!!!";	\
+			exit 1;	\
+		fi;	\
+	fi;

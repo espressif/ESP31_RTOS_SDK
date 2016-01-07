@@ -76,17 +76,9 @@
 //}}
 
 //Periheral Clock {{
-#define  CPU_CLK_FREQ           13*1000000       //unit: Hz
-#define  APB_CLK_FREQ           CPU_CLK_FREQ
-#define  UART_CLK_FREQ          APB_CLK_FREQ
-//#define  WDT_CLK_FREQ         APB_CLK_FREQ
-#define  TIMER_CLK_FREQ         (80000000>>4)   //80MHz divided by 16
-#define  SPI_CLK_DIV            4
-//#define  RTC_CLK_FREQ         32768           //unit:Hz
-//#define  RTC_CLK_FREQ         100000          //unit:Hz
-//#define  CALIB_CLK_MHZ        40
-#define  TICKS_PER_US           13              // CPU is 80MHz
-//}}
+#define  APB_CLK_FREQ                                80*1000000       //unit: Hz
+#define  CPU_CLK_FREQ                                APB_CLK_FREQ
+#define  UART_CLK_FREQ                               APB_CLK_FREQ
 
 //Peripheral device base address define{{
 #define PERIPHS_DPORT_BASEADDR          0x3ff00000

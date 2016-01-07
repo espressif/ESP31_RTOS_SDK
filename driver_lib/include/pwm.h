@@ -127,7 +127,7 @@ uint32 pwm_get_duty(uint8 channel);
   *
   *            For example, for 1KHz PWM, period is 1000 us.
   *
-  * @attention After set configuration, pwm_start needs to be called to take effect.
+  * @attention  After set configuration, pwm_start needs to be called to take effect.
   *
   * @param     uint32 period : PWM period, unit : us.
   *
@@ -145,17 +145,28 @@ void pwm_set_period(uint32 period);
 uint32 pwm_get_period(void);
 
 /**
-  * @brief     set high_speed channel base clk
+  * @brief  Starts PWM. 
+  *
+  * @attention This function needs to be called after PWM configuration is changed.
+  *
+  * @param  null
+  *
+  * @return null
+  */
+void pwm_start(void);
+
+/**
+  * @brief     Set high_speed channel base clock.
   *
   * @param     uint8 timer_sel : timer to set
-  * @param     uint8 apb_clk_sel :pick clock source for timer
+  * @param     uint8 apb_clk_sel : pick clock source for timer
   *
   * @return    null
   */
 void ledc_set_base_hclk(uint8 timer_sel, uint8 apb_clk_sel);
 
 /**
-  * @brief     set low_speed channel base clk
+  * @brief     Set low_speed channel base clock.
   *
   * @param     uint8 timer_sel : timer to set
   * @param     uint8 apb_clk_sel :pick clock source for timer
@@ -165,35 +176,35 @@ void ledc_set_base_hclk(uint8 timer_sel, uint8 apb_clk_sel);
 void ledc_set_base_lclk(uint8 timer_sel, uint8 apb_clk_sel);
 
 /**
-  * @brief     set high_speed channel frequency
+  * @brief     Set high_speed channel frequency.
   *
   *            frequency=base_clk_frequency*div_num*(2^timer_lim)/256
   *
   * @param     uint8 timer_sel : timer to set
-  * @param     uint32 div_num: set first divider
-  * @param     uint8 timer_lim: set second divider
+  * @param     uint32 div_num : set first divider
+  * @param     uint8 timer_lim : set second divider
   *
   * @return    null
   */
 void ledc_set_hperiod(uint8 timer_sel, uint32 div_num, uint8 timer_lim);
 
 /**
-  * @brief     set low_speed channel frequency
+  * @brief     Set low_speed channel frequency.
   *
   *            frequency=base_clk_frequency*div_num*(2^timer_lim)/256
   *
   * @param     uint8 timer_sel : timer to set
-  * @param     uint32 div_num: set first divider
-  * @param     uint8 timer_lim: set second divider
+  * @param     uint32 div_num : set first divider
+  * @param     uint8 timer_lim : set second divider
   *
   * @return    null
   */
 void ledc_set_lperiod(uint8 timer_sel, uint32 div_num, uint8 timer_lim);
 
 /**
-  * @brief     select one timer for one low_speed channel
+  * @brief     Select one timer for one low_speed channel.
   *
-  * @param     uint8 chan_num: channel to pick
+  * @param     uint8 chan_num : channel to pick
   * @param     uint8 timer_sel : timer to set
   *
   * @return    null
@@ -201,9 +212,9 @@ void ledc_set_lperiod(uint8 timer_sel, uint32 div_num, uint8 timer_lim);
 void ledc_set_ltimer(uint8 chan_num, uint8 timer_sel);
 
 /**
-  * @brief     select one timer for one high_speed channel
+  * @brief     Select one timer for one high_speed channel.
   *
-  * @param     uint8 chan_num: channel to pick
+  * @param     uint8 chan_num : channel to pick
   * @param     uint8 timer_sel : timer to set
   *
   * @return    null
@@ -211,75 +222,75 @@ void ledc_set_ltimer(uint8 chan_num, uint8 timer_sel);
 void ledc_set_htimer(uint8 chan_num, uint8 timer_sel);
 
 /**
-  * @brief     set high_speed channel output (as high or low) when idle
+  * @brief     Set high_speed channel output (as high or low) when idle.
   *
-  * @param     uint8 chan_num: channel to pick
-  * @param     uint8 idle_level :choose output as high or low
+  * @param     uint8 chan_num : channel to pick
+  * @param     uint8 idle_level : choose output as high or low
   *
   * @return    null
   */
 void ledc_set_idle_hlevel(uint8 chan_num, uint8 idle_level);
 
 /**
-  * @brief     set low_speed channel output (as high or low) when idle
+  * @brief     Set low_speed channel output (as high or low) when idle.
   *
-  * @param     uint8 chan_num: channel to pick
-  * @param     uint8 idle_level :choose output as high or low
+  * @param     uint8 chan_num : channel to pick
+  * @param     uint8 idle_level : choose output as high or low
   *
   * @return    null
   */
 void ledc_set_idle_llevel(uint8 chan_num, uint8 idle_level);
 
 /**
-  * @brief     set high_speed channel duty
+  * @brief     Set high_speed channel duty.
   *
-  * @param     uint8 chan_num: 8 channels in total,value from 0~7
-  * @param     uint32 hpoint_val:output high when counter equals this value
-  * @param     uint32 duty_val: output low after counter equals this value
-  * @param     uint8 increase: 1-increase duty ratio,0-decrease duty ratio
-  * @param     uint16 duty_num: generate interrupt after duty_num * duty_cycle outputs
-  * @param     uint16 duty_cycle: increase or decrease duty ratio every duty_cycle outputs
-  * @param     uint16 duty_scale: the range of changing on duty ratio
+  * @param     uint8 chan_num : 8 channels in total,value from 0~7
+  * @param     uint32 hpoint_val : output high when counter equals this value
+  * @param     uint32 duty_val : output low after counter equals this value
+  * @param     uint8 increase : 1 - increase duty ratio, 0 - decrease duty ratio
+  * @param     uint16 duty_num : generate interrupt after duty_num * duty_cycle outputs
+  * @param     uint16 duty_cycle : increase or decrease duty ratio every duty_cycle outputs
+  * @param     uint16 duty_scale : the range of changing on duty ratio
   *
   * @return    null
   */
 void ledc_set_hduty(uint8 chan_num, uint32 hpoint_val, uint32 duty_val, uint8 increase, uint16 duty_num, uint16 duty_cycle, uint16 duty_scale);
 
 /**
-  * @brief     set low_speed channel duty
+  * @brief     Set low_speed channel duty.
   *
-  * @param     uint8 chan_num: 8 channels in total,value from 0~7
-  * @param     uint32 hpoint_val:output high when counter equals this value
-  * @param     uint32 duty_val: output low after counter equals this value
-  * @param     uint8 increase: 1-increase duty ratio,0-decrease duty ratio
-  * @param     uint16 duty_num: generate interrupt after duty_num * duty_cycle outputs
-  * @param     uint16 duty_cycle: increase or decrease duty ratio every duty_cycle outputs
-  * @param     uint16 duty_scale: the range of changing on duty ratio
+  * @param     uint8 chan_num : 8 channels in total, value from 0~7
+  * @param     uint32 hpoint_val : output high when counter equals this value
+  * @param     uint32 duty_val : output low after counter equals this value
+  * @param     uint8 increase : 1 - increase duty ratio, 0 - decrease duty ratio
+  * @param     uint16 duty_num : generate interrupt after duty_num * duty_cycle outputs
+  * @param     uint16 duty_cycle : increase or decrease duty ratio every duty_cycle outputs
+  * @param     uint16 duty_scale : the range of changing on duty ratio
   *
   * @return    null
   */
 void ledc_set_lduty(uint8 chan_num, uint32 hpoint_val, uint32 duty_val, uint8 increase, uint16 duty_num, uint16 duty_cycle, uint16 duty_scale);
 
 /**
-  * @brief     enable one high_speed channel
+  * @brief     Enable one high_speed channel.
   *
-  * @param     uint8 chan_num: channel to pick
+  * @param     uint8 chan_num : channel to pick
   *
   * @return    null
   */
 void ledc_hstart(uint8 chan_num);
 
 /**
-  * @brief     enable one low_speed channel
+  * @brief     Enable one low_speed channel.
   *
-  * @param     uint8 chan_num: channel to pick
+  * @param     uint8 chan_num : channel to pick
   *
   * @return    null
   */
 void ledc_lstart(uint8 chan_num);
 
 /**
-  * @brief  pause one of the timers for high_speed channel
+  * @brief  Pause one of the timers for high_speed channel.
   *
   * @param  uint8 timer_sel : timer to set
   *
@@ -288,7 +299,7 @@ void ledc_lstart(uint8 chan_num);
 void ledc_timer_hpause(uint8 timer_sel);
 
 /**
-  * @brief     pause one of the timers for low_speed channel
+  * @brief     Pause one of the timers for low_speed channel.
   *
   * @param     uint8 timer_sel : timer to set
   *
@@ -297,7 +308,7 @@ void ledc_timer_hpause(uint8 timer_sel);
 void ledc_timer_lpause(uint8 timer_sel);
 
 /**
-  * @brief     unpause one of the timers for high_speed channel
+  * @brief     Unpause one of the timers for high_speed channel.
   *
   * @param     uint8 timer_sel : timer to set
   *
@@ -306,7 +317,7 @@ void ledc_timer_lpause(uint8 timer_sel);
 void ledc_timer_hunpause(uint8 timer_sel);
 
 /**
-  * @brief     unpause one of the timers for low_speed channel
+  * @brief     Unpause one of the timers for low_speed channel.
   *
   * @param     uint8 timer_sel : timer to set
   *
@@ -315,7 +326,7 @@ void ledc_timer_hunpause(uint8 timer_sel);
 void ledc_timer_lunpause(uint8 timer_sel);
 
 /**
-  * @brief     stop one of the timers for high_speed channel
+  * @brief     Stop one of the timers for high_speed channel.
   *
   * @param     uint8 timer_sel : timer to set
   *
@@ -324,7 +335,7 @@ void ledc_timer_lunpause(uint8 timer_sel);
 void ledc_timer_hstop(uint8 timer_sel);
 
 /**
-  * @brief     stop one of the timers for low_speed channel
+  * @brief     Stop one of the timers for low_speed channel.
   *
   * @param     uint8 timer_sel : timer to set
   *

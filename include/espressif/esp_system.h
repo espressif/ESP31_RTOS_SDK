@@ -281,24 +281,31 @@ bool system_param_load(uint16 start_sec, uint16 offset, void *param, uint16 len)
   * @{
   */
 
-typedef enum {
+enum flash_size{
     FLASH_SIZE_1MB = 0,     /**<  Flash size :  1M Bytes */
     FLASH_SIZE_2MB,         /**<  Flash size :  2M Bytes */
     FLASH_SIZE_4MB,         /**<  Flash size :  4M Bytes */
     FLASH_SIZE_8MB,         /**<  Flash size :  8M Bytes */
     FLASH_SIZE_16MB,        /**<  Flash size : 16M Bytes */
-    FLASH_SIZE_32MB,        /**<  Flash size : 32M Bytes */
     FLASH_SIZE_MAX
-} flash_size_map;
+} ;
+
+struct b_info{
+	char bin_start_flash_id;  /**< start flash id of bin file*/
+	char bin_end_flash_id;    /**< end flash id of bin file*/
+	char bin_status;		  /**< bin's run status */
+	char pad;				  /**< padding*/
+	unsigned int jump_addr;   /**< jump_addr is irom0_flash.bin's start addr in flash*/
+};
 
 /**
   * @brief  Get the current Flash size.
   *
   * @param  null
   *
-  * @return enum flash_size_map
+  * @return enum flash_size
   */
-flash_size_map system_get_flash_size(void);
+enum flash_size system_get_flash_size(void);
 
 /**
   * @brief  Get CPU frequency.
@@ -310,9 +317,45 @@ flash_size_map system_get_flash_size(void);
 uint8 system_get_cpu_freq(void);
 
 /**
-  * @}
+  * @brief   Get bin info named by b_id
+  *
+  * @param   uint8 bin_id : b_id number, must < 5
+  * @param   struct b_info *b_if : bin info of bin named by b_id 
+  *
+  * @return  true  : succeed
+  * @return  false : fail
   */
+bool system_get_bin_info(uint8 bin_id, struct b_info *b_if);
 
+/**
+  * @brief  Set bin info named by b_id
+  *
+  * @param   uint8 bin_id : b_id number, must < 5
+  * @param   struct b_info *b_if : bin info of bin named by b_id 
+  *
+  * @return  true  : succeed
+  * @return  false : fail
+  */
+bool system_set_bin_info(uint8 bin_id, struct b_info *b_if);
+
+/**
+  * @brief   Get current bin's bin_id
+  *
+  * @param   uint8 bin_id : b_id number, must < 5
+  *
+  * @return  uint8 type b_id
+  */
+uint8 system_get_current_bin_id(void);
+
+/**
+  * @brief   reboot and jump to bin named by bin_id
+  *
+  * @param   uint8 bin_id : b_id number, must < 5
+  *
+  * @return  true  : succeed
+  * @return  false : fail
+  */
+bool system_reboot_to_userbin(uint8 bin_id);
 
 /** \defgroup Hardware_MAC_APIs Hardware MAC APIs
   * @brief Hardware MAC address APIs

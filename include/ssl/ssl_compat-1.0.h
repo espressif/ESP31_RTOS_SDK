@@ -96,5 +96,41 @@
 #define SSL_ERROR_WANT_ACCEPT					ESP_SSL_ERROR_WANT_ACCEPT
 
 /*encapsulation the protocol based on the different platform*/
+#ifdef OPENSSL_BIGNUM
+#define BN_new(a)							esp_BN_new(a)
+#define BN_free(a) 							esp_BN_free(a)
+
+#define BN_bin2bn(a,b,c) 					esp_BN_bin2bn(a,b,c)
+#define BN_set_word(a,b) 					esp_BN_set_word(a,b)
+#define BN_bn2bin(a,b) 						esp_BN_bn2bin(a,b)
+#define BN_bn2hex(a)						esp_BN_bn2hex(a)
+#define BN_num_bits(a)						esp_BN_num_bits(a)
+#define BN_cmp(a,b)							esp_BN_cmp(a,b)
+#define BN_lshift(a,b,c) 					esp_BN_lshift(a,b,c)
+#define BN_add(a,b,c) 						esp_BN_add(a,b,c)
+#define BN_copy(a,b) 						esp_BN_copy(a,b)
+#define BN_add_word(a,b) 					esp_BN_add_word(a,b)
+#define BN_sub(a,b,c) 						esp_BN_sub(a,b,c)
+#define BN_sub_word(a,b) 					esp_BN_sub_word(a,b)
+#define BN_mul(a,b,c,d) 					esp_BN_mul(a,b,c,d)
+#define BN_mul_word(a,b) 					esp_BN_mul_word(a,b)
+#define BN_div_word(a,b) 					esp_BN_div_word(a,b)
+#define BN_mod(a,b,c,d) 					esp_BN_mod(a,b,c,d)
+#define BN_mod_word(a,b) 					esp_BN_mod_word(a,b)
+#define BN_mod_mul(a,b,c,d,e) 				esp_BN_mod_mul(a,b,c,d,e)
+#define BN_mod_exp(a,b,c,d,e) 				esp_BN_mod_exp(a,b,c,d,e)
+#define BN_mod_exp_mont_word(a,b,c,d,e,f) 	esp_BN_mod_exp_mont_word(a,b,c,d,e,f)
+#define BN_mod_exp_mont(a,b,c,d,e,f) 		esp_BN_mod_exp_mont(a,b,c,d,e,f)
+#define BN_is_prime(a,b,c,d,e) 				esp_BN_is_prime(a,b,c,d,e)
+
+#define BN_clear_free(a) 					esp_BN_clear_free(a)
+
+#define BN_CTX_new(a) 						esp_BN_CTX_new(a)
+#define BN_CTX_free(a) 						esp_BN_CTX_free(a)
+
+#define BN_MONT_CTX_new(a) 					esp_BN_MONT_CTX_new(a)
+#define BN_MONT_CTX_set(a,b,c) 				esp_BN_MONT_CTX_set(a,b,c)
+#define BN_MONT_CTX_free(a) 				esp_BN_MONT_CTX_free(a)
+#endif
 
 #endif /* SSL_COMPAT_1_0_H_ */

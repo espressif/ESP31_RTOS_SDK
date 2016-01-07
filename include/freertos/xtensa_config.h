@@ -149,7 +149,7 @@ extern "C" {
 #endif
 
 /* Minimum recommended stack size. */
-#define XT_STACK_MIN_SIZE         ((XT_XTRA_SIZE + XT_USER_SIZE) / sizeof(unsigned char))
+#define XT_STACK_MIN_SIZE         ((XT_XTRA_SIZE + XT_USER_SIZE) / sizeof(unsigned long))
 
 /* OS overhead with and without C library thread context. */
 #define XT_STACK_EXTRA            (XT_XTRA_SIZE)
