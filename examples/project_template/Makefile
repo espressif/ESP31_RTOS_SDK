@@ -11,6 +11,9 @@
 #     subdir/lib to be extracted and rolled up into
 #     a generated lib/image xxx.a ()
 #
+
+sinclude esp.conf
+
 TARGET = eagle
 #FLAVOR = release
 FLAVOR = debug
@@ -26,8 +29,6 @@ SUBDIRS=    \
     sample_lib
 
 endif # } PDIR
-
-LDDIR = $(SDK_PATH)/ld
 
 CCFLAGS += -Os
 
@@ -121,7 +122,7 @@ FORCE:
 		echo "Please export SDK_PATH firstly!!!";	\
 		exit 1;	\
 	else	\
-		if test ! -d $(SDK_PATH)/include/espressif/esp32; then \
+		if test ! -d $(SDK_PATH)/include/esp32; then \
 			echo "$(SDK_PATH) is not a ESP32_RTOS_SDK path, please check!!!";	\
 			exit 1;	\
 		fi;	\

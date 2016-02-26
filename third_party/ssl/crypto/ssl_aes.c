@@ -159,22 +159,23 @@ static const unsigned char Rcon[30]=
 	0x5e,0xbc,0x63,0xc6,0x97,0x35,0x6a,0xd4,
 	0xb3,0x7d,0xfa,0xef,0xc5,0x91,
 };
-
 /* ----- static functions ----- */
 static void AES_encrypt(const AES_CTX *ctx, uint32_t *data);
 static void AES_decrypt(const AES_CTX *ctx, uint32_t *data);
 
 /* Perform doubling in Galois Field GF(2^8) using the irreducible polynomial
    x^8+x^4+x^3+x+1 */
-static unsigned char ICACHE_FLASH_ATTR AES_xtime(uint32_t x)
+static unsigned char AES_xtime(uint32_t x)
 {
 	return (x&0x80) ? (x<<1)^0x1b : x<<1;
 }
 
+#ifdef SOFTWARE_CRYPTO
+
 /**
  * Set up AES with the key/iv and cipher size.
  */
-void ICACHE_FLASH_ATTR AES_set_key(AES_CTX *ctx, const uint8_t *key, 
+void AES_set_key(AES_CTX *ctx, const uint8_t *key, 
         const uint8_t *iv, AES_MODE mode)
 {
     int i, ii;
@@ -249,7 +250,7 @@ void ICACHE_FLASH_ATTR AES_set_key(AES_CTX *ctx, const uint8_t *key,
 /**
  * Change a key for decryption.
  */
-void ICACHE_FLASH_ATTR AES_convert_key(AES_CTX *ctx)
+void AES_convert_key(AES_CTX *ctx)
 {
     int i;
     uint32_t *k,w,t1,t2,t3,t4;
@@ -268,7 +269,7 @@ void ICACHE_FLASH_ATTR AES_convert_key(AES_CTX *ctx)
 /**
  * Encrypt a byte sequence (with a block size 16) using the AES cipher.
  */
-void ICACHE_FLASH_ATTR AES_cbc_encrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
+void AES_cbc_encrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
 {
     int i;
     uint32_t tin[4], tout[4], iv[4];
@@ -307,7 +308,7 @@ void ICACHE_FLASH_ATTR AES_cbc_encrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t
 /**
  * Decrypt a byte sequence (with a block size 16) using the AES cipher.
  */
-void ICACHE_FLASH_ATTR AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
+void AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
 {
     int i;
     uint32_t tin[4], xor[4], tout[4], data[4], iv[4];
@@ -350,7 +351,7 @@ void ICACHE_FLASH_ATTR AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t
 /**
  * Encrypt a single block (16 bytes) of data
  */
-static void ICACHE_FLASH_ATTR AES_encrypt(const AES_CTX *ctx, uint32_t *data)
+static void AES_encrypt(const AES_CTX *ctx, uint32_t *data)
 {
     /* To make this code smaller, generate the sbox entries on the fly.
      * This will have a really heavy effect upon performance.
@@ -400,7 +401,7 @@ static void ICACHE_FLASH_ATTR AES_encrypt(const AES_CTX *ctx, uint32_t *data)
 /**
  * Decrypt a single block (16 bytes) of data
  */
-static void ICACHE_FLASH_ATTR AES_decrypt(const AES_CTX *ctx, uint32_t *data)
+static void AES_decrypt(const AES_CTX *ctx, uint32_t *data)
 { 
     uint32_t tmp[4];
     uint32_t xt0,xt1,xt2,xt3,xt4,xt5,xt6;
@@ -452,5 +453,395 @@ static void ICACHE_FLASH_ATTR AES_decrypt(const AES_CTX *ctx, uint32_t *data)
             data[row-1] = tmp[row-1] ^ *(--k);
     }
 }
+
+#else
+//#define SYNC_CRYPTO_LOG
+
+#ifdef SYNC_CRYPTO_LOG
+#define SYNC_CRYPTO_MSG ets_printf
+#else
+#define SYNC_CRYPTO_MSG
+#endif
+
+uint32 *share_buffer = (uint32*)0x3fff7000;
+
+void sync_str_to_hex(char* src, uint16 len)
+{
+	uint16 i = 0;
+	for (i = 0; i < len; i ++){
+		SYNC_CRYPTO_MSG("%x ", src[i]);
+		if ((i + 1) % 16 == 0)
+			SYNC_CRYPTO_MSG("\n");
+	}
+	SYNC_CRYPTO_MSG("\n");	
+}
+
+static void sync_AES_set_key_request(AES_CTX *ctx, const uint8_t *key, 
+        const uint8_t *iv, AES_MODE mode)
+{
+	uint16 length = 0;
+	char* sync_buffer = (char*)share_buffer;
+
+	SYNC_CRYPTO_MSG("sync_AES_set_key %x %x\n", ctx->rounds, ctx->key_size);
+	//AES_CTX info
+	*sync_buffer++ = (char)((ctx->rounds & 0x0000ff00) >> 8);
+	*sync_buffer++ = (char)(ctx->rounds & 0x000000ff);
+
+	*sync_buffer++ = (char)((ctx->key_size & 0x0000ff00) >> 8);
+	*sync_buffer++ = (char)(ctx->key_size & 0x000000ff);
+	
+	memcpy(sync_buffer, ctx->ks, sizeof(ctx->ks));
+	sync_buffer += sizeof(ctx->ks);
+
+	memcpy(sync_buffer, ctx->iv, sizeof(ctx->iv));
+	sync_buffer += sizeof(ctx->iv);
+
+	//key info
+	if (key != NULL){
+		switch(mode){
+	        case AES_MODE_128:
+				length = AES_BLOCKSIZE;
+			break;
+
+			case AES_MODE_256:
+				length = AES_BLOCKSIZE * 2;
+				break;
+
+			default:
+				break;
+		}		
+	} else {
+		length = 0;
+	}
+
+	*sync_buffer++ = (char)((length & 0x0000ff00) >> 8);
+	*sync_buffer++ = (char)(length & 0x000000ff);
+	if (length != 0)
+		memcpy(sync_buffer, key, length);
+	sync_buffer += length;
+	SYNC_CRYPTO_MSG("key [%x]\n",length);
+
+	//iv info
+	if (iv != NULL){
+		length = AES_IV_SIZE;
+	} else {
+		length = 0;
+	}
+
+	*sync_buffer++ = (char)((length & 0x0000ff00) >> 8);
+	*sync_buffer++ = (char)(length & 0x000000ff);
+	if (length != 0)
+		memcpy(sync_buffer, iv, length);
+	sync_buffer += length;
+
+	SYNC_CRYPTO_MSG("iv [%x]\n",length);
+
+	//encrypt mode
+	*sync_buffer++ = mode;
+	SYNC_CRYPTO_MSG("mode [%x]\n",mode);
+	
+}
+
+static void sync_AES_set_key_response(AES_CTX *ctx, const uint8_t *key, 
+        const uint8_t *iv, AES_MODE mode)
+{
+	char* sync_buffer = NULL;	
+	uint8 high_len = 0;
+	uint8 low_len = 0;
+
+	//share memry info
+	sync_buffer = (char*)share_buffer;
+
+	//AES_CTX info
+	high_len = (*sync_buffer++) & 0xff;
+	low_len = (*sync_buffer++) & 0xff;
+	ctx->rounds = ((uint16)high_len << 8) | ((uint16)low_len);
+
+	high_len = (*sync_buffer++) & 0xff;
+	low_len = (*sync_buffer++) & 0xff;	
+	ctx->key_size = ((uint16)high_len << 8) | ((uint16)low_len);
+
+	SYNC_CRYPTO_MSG("sync_AES_set_key_response %d, [%x],[%x]\n",__LINE__,ctx->rounds, ctx->key_size);
+	
+	memcpy(ctx->ks, sync_buffer, sizeof(ctx->ks));
+	sync_buffer += sizeof(ctx->ks);
+	sync_str_to_hex((uint8*)ctx->ks, sizeof(ctx->ks));
+	
+	memcpy(ctx->iv, sync_buffer, sizeof(ctx->iv));
+	sync_buffer += sizeof(ctx->iv);
+	sync_str_to_hex((uint8*)ctx->iv, sizeof(ctx->iv));
+}
+
+
+void sync_AES_convert_key_request(AES_CTX *ctx)
+{
+	char* sync_buffer = (char*)share_buffer;
+	*sync_buffer++ = (ctx->rounds && 0xff00) >> 8;
+	*sync_buffer++ = (ctx->rounds && 0x00ff);
+
+	*sync_buffer++ = (ctx->key_size && 0xff00) >> 8;
+	*sync_buffer++ = (ctx->key_size && 0x00ff);
+	
+	memcpy(sync_buffer, ctx->ks, sizeof(ctx->ks));
+	sync_buffer += sizeof(ctx->ks);
+	
+	memcpy(sync_buffer, ctx->iv, sizeof(ctx->iv));
+	sync_buffer += sizeof(ctx->iv);
+
+	return;
+}
+
+void sync_AES_convert_key_response(AES_CTX *ctx)
+{
+	char* sync_buffer = (char*)share_buffer;
+	*sync_buffer++ = (ctx->rounds && 0xff00) >> 8;
+	*sync_buffer++ = (ctx->rounds && 0x00ff);
+
+	*sync_buffer++ = (ctx->key_size && 0xff00) >> 8;
+	*sync_buffer++ = (ctx->key_size && 0x00ff);
+	
+	memcpy(sync_buffer, ctx->ks, sizeof(ctx->ks));
+	sync_buffer += sizeof(ctx->ks);
+	
+	memcpy(sync_buffer, ctx->iv, sizeof(ctx->iv));
+	sync_buffer += sizeof(ctx->iv);
+
+	return;
+}
+
+
+void sync_AES_data_request(const AES_CTX *ctx, uint32_t *data)
+{
+//	char* sync_buffer = (char*)share_buffer + sizeof(AES_CTX);
+
+	char* sync_buffer = (char*)share_buffer;
+
+	SYNC_CRYPTO_MSG("sync_AES_set_key %x %x\n", ctx->rounds, ctx->key_size);
+	//AES_CTX info
+	*sync_buffer++ = (char)((ctx->rounds & 0x0000ff00) >> 8);
+	*sync_buffer++ = (char)(ctx->rounds & 0x000000ff);
+
+	*sync_buffer++ = (char)((ctx->key_size & 0x0000ff00) >> 8);
+	*sync_buffer++ = (char)(ctx->key_size & 0x000000ff);
+	
+	memcpy(sync_buffer, ctx->ks, sizeof(ctx->ks));
+	sync_buffer += sizeof(ctx->ks);
+
+	memcpy(sync_buffer, ctx->iv, sizeof(ctx->iv));
+	sync_buffer += sizeof(ctx->iv);
+
+	uint16 length = AES_BLOCKSIZE;
+	
+	*sync_buffer++ = (char)((length & 0x0000ff00) >> 8);
+	*sync_buffer++ = (char)(length & 0x000000ff);
+	if (length != 0)
+		memcpy(sync_buffer, data, length);
+
+	SYNC_CRYPTO_MSG("sync_AES_data_request %d, [%x]\n", __LINE__, length);
+	sync_str_to_hex((uint8*)data, length);
+}
+
+void sync_AES_data_response(const AES_CTX *ctx, uint32_t *data)
+{
+	char* sync_buffer = (char*)share_buffer + sizeof(AES_CTX);
+	uint8 high_len = 0;
+	uint8 low_len = 0;
+	uint16 encrypt_data_len = 0;
+	
+	//encrypt_data_len and encrypt data
+	high_len = (*sync_buffer++) & 0xff;
+	low_len = (*sync_buffer++) & 0xff;
+	encrypt_data_len = ((uint16)high_len << 8) | ((uint16)low_len);
+	if (encrypt_data_len != 0){		
+		memcpy(data, sync_buffer, encrypt_data_len);
+	}
+
+	SYNC_CRYPTO_MSG("sync_AES_data_response %d, [%x]\n", __LINE__, encrypt_data_len);
+	sync_str_to_hex((uint8*)data, encrypt_data_len);
+}
+
+
+/**
+ * Set up AES with the key/iv and cipher size.
+ */
+void AES_set_key(AES_CTX *ctx, const uint8_t *key, 
+        const uint8_t *iv, AES_MODE mode)
+{
+   SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+   
+   SSL_CTX_SYNC_LOCK(NULL);
+   SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+   sync_AES_set_key_request(ctx, key, iv, mode);
+   SSL_CTX_SYNC_OPT_THREAD(SYNC_KEY_SET);
+   SSL_CTX_SYNC_REQUEST();
+//   for(;;){   		
+//		if (SSL_CTX_SYNC_THREAD()){
+//			sync_AES_set_key_response(ctx, key, iv, mode);
+//			break;
+//		}
+//   }
+   SSL_CTX_SYNC_SEM_WAIT(NULL);
+   sync_AES_set_key_response(ctx, key, iv, mode);
+   SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+   SSL_CTX_SYNC_UNLOCK(NULL);
+   SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+}
+
+/**
+ * Change a key for decryption.
+ */
+void AES_convert_key(AES_CTX *ctx)
+{
+	SSL_CTX_SYNC_LOCK(NULL);
+	sync_AES_convert_key_request(ctx);
+	SSL_CTX_SYNC_OPT_THREAD(SYNC_KEY_CONVER);
+	SSL_CTX_SYNC_REQUEST();
+//    for(;;){
+//		if (SSL_CTX_SYNC_THREAD()){
+//			sync_AES_convert_key_response(ctx);
+//			break;
+//		}
+//   }
+   SSL_CTX_SYNC_SEM_WAIT(NULL);
+   SSL_CTX_SYNC_UNLOCK(NULL);
+   SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+}
+
+/**
+ * Encrypt a byte sequence (with a block size 16) using the AES cipher.
+ */
+void AES_cbc_encrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
+{
+    int i;
+    uint32_t tin[4], tout[4], iv[4];
+
+    memcpy(iv, ctx->iv, AES_IV_SIZE);
+    for (i = 0; i < 4; i++)
+        tout[i] = ntohl(iv[i]);
+
+	SYNC_CRYPTO_MSG("AES_cbc_encrypt %d\n", length);
+    for (length -= AES_BLOCKSIZE; length >= 0; length -= AES_BLOCKSIZE)
+    {
+        uint32_t msg_32[4];
+        uint32_t out_32[4];
+        memcpy(msg_32, msg, AES_BLOCKSIZE);
+        msg += AES_BLOCKSIZE;
+
+        for (i = 0; i < 4; i++)
+            tin[i] = ntohl(msg_32[i])^tout[i];
+
+        AES_encrypt(ctx, tin);
+
+        for (i = 0; i < 4; i++)
+        {
+            tout[i] = tin[i]; 
+            out_32[i] = htonl(tout[i]);
+        }
+
+        memcpy(out, out_32, AES_BLOCKSIZE);
+        out += AES_BLOCKSIZE;
+    }
+
+    for (i = 0; i < 4; i++)
+        iv[i] = htonl(tout[i]);
+    memcpy(ctx->iv, iv, AES_IV_SIZE);
+}
+
+/**
+ * Decrypt a byte sequence (with a block size 16) using the AES cipher.
+ */
+void AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
+{
+    int i;
+    uint32_t tin[4], xor[4], tout[4], data[4], iv[4];
+
+    memcpy(iv, ctx->iv, AES_IV_SIZE);
+    for (i = 0; i < 4; i++)
+        xor[i] = ntohl(iv[i]);
+
+    for (length -= 16; length >= 0; length -= 16)
+    {
+        uint32_t msg_32[4];
+        uint32_t out_32[4];
+        memcpy(msg_32, msg, AES_BLOCKSIZE);
+        msg += AES_BLOCKSIZE;
+
+        for (i = 0; i < 4; i++)
+        {
+            tin[i] = ntohl(msg_32[i]);
+            data[i] = tin[i];
+        }
+
+        AES_decrypt(ctx, data);
+
+        for (i = 0; i < 4; i++)
+        {
+            tout[i] = data[i]^xor[i];
+            xor[i] = tin[i];
+            out_32[i] = htonl(tout[i]);
+        }
+
+        memcpy(out, out_32, AES_BLOCKSIZE);
+        out += AES_BLOCKSIZE;
+    }
+
+    for (i = 0; i < 4; i++)
+        iv[i] = htonl(xor[i]);
+    memcpy(ctx->iv, iv, AES_IV_SIZE);
+}
+
+/**
+ * Encrypt a single block (16 bytes) of data
+ */
+static void AES_encrypt(const AES_CTX *ctx, uint32_t *data)
+{
+	SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+	
+   
+    SSL_CTX_SYNC_LOCK(NULL);
+    SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+    sync_AES_data_request(ctx, data);
+    SSL_CTX_SYNC_OPT_THREAD(SYNC_DATA_ENCRYPT);
+    SSL_CTX_SYNC_REQUEST();
+    SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+//    for(;;){ 		
+//		if (SSL_CTX_SYNC_THREAD()){
+//			sync_AES_data_response(ctx, data);
+//			break;
+//		}
+//    }
+	SSL_CTX_SYNC_SEM_WAIT(NULL);
+	sync_AES_data_response(ctx, data);
+	SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+    SSL_CTX_SYNC_UNLOCK(NULL);
+	SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+}
+
+/**
+ * Decrypt a single block (16 bytes) of data
+ */
+static void AES_decrypt(const AES_CTX *ctx, uint32_t *data)
+{ 
+	SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+	
+    SSL_CTX_SYNC_LOCK(NULL);
+	SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+	sync_AES_data_request(ctx, data);
+	SSL_CTX_SYNC_OPT_THREAD(SYNC_DATA_DECRYPT);
+	SSL_CTX_SYNC_REQUEST();
+	SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+//	for(;;){
+//		if (SSL_CTX_SYNC_THREAD()){
+//			sync_AES_data_response(ctx, data);
+//			break;
+//		}
+//   }
+   SSL_CTX_SYNC_SEM_WAIT(NULL);
+   sync_AES_data_response(ctx, data);
+   SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+   SSL_CTX_SYNC_UNLOCK(NULL);
+   SYNC_CRYPTO_MSG("%s, %d\n",__FILE__, __LINE__);
+}
+#endif
 
 #endif

@@ -45,7 +45,7 @@ static int send_cert_verify(SSL *ssl);
  * Establish a new SSL connection to an SSL server.
  */
 
-EXP_FUNC SSL * STDCALL ICACHE_FLASH_ATTR ssl_client_new(SSL_CTX *ssl_ctx, int client_fd, const
+EXP_FUNC SSL * STDCALL ssl_client_new(SSL_CTX *ssl_ctx, int client_fd, const
         uint8_t *session_id, uint8_t sess_id_size)
 {	
     SSL *ssl = ssl_new(ssl_ctx, client_fd);
@@ -72,7 +72,7 @@ EXP_FUNC SSL * STDCALL ICACHE_FLASH_ATTR ssl_client_new(SSL_CTX *ssl_ctx, int cl
 /*
  * Process the handshake record.
  */
-int ICACHE_FLASH_ATTR do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
+int do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *buf, int hs_len)
 {
     int ret;
 
@@ -138,7 +138,7 @@ int ICACHE_FLASH_ATTR do_clnt_handshake(SSL *ssl, int handshake_type, uint8_t *b
 /*
  * Do the handshaking from the beginning.
  */
-int ICACHE_FLASH_ATTR do_client_connect(SSL *ssl)
+int do_client_connect(SSL *ssl)
 {
     int ret = SSL_OK;
 	
@@ -168,7 +168,7 @@ int ICACHE_FLASH_ATTR do_client_connect(SSL *ssl)
 /*
  * Send the initial client hello.
  */
-static int ICACHE_FLASH_ATTR send_client_hello(SSL *ssl)
+static int send_client_hello(SSL *ssl)
 {
     uint8_t *buf = ssl->bm_data;
     time_t tm = 0;  //time(NULL); wujg : pass compile first
@@ -227,7 +227,7 @@ static int ICACHE_FLASH_ATTR send_client_hello(SSL *ssl)
 /*
  * Process the server hello.
  */
-static int ICACHE_FLASH_ATTR process_server_hello(SSL *ssl)
+static int process_server_hello(SSL *ssl)
 {
     uint8_t *buf = ssl->bm_data;
     int pkt_size = ssl->bm_index;
@@ -295,7 +295,7 @@ error:
 /**
  * Process the server hello done message.
  */
-static int ICACHE_FLASH_ATTR process_server_hello_done(SSL *ssl)
+static int process_server_hello_done(SSL *ssl)
 {
     ssl->next_state = HS_FINISHED;
     return SSL_OK;
@@ -304,7 +304,7 @@ static int ICACHE_FLASH_ATTR process_server_hello_done(SSL *ssl)
 /*
  * Send a client key exchange message.
  */
-static int ICACHE_FLASH_ATTR send_client_key_xchg(SSL *ssl)
+static int send_client_key_xchg(SSL *ssl)
 {
     uint8_t *buf = ssl->bm_data;
     uint8_t premaster_secret[SSL_SECRET_SIZE];
@@ -337,7 +337,7 @@ static int ICACHE_FLASH_ATTR send_client_key_xchg(SSL *ssl)
 /*
  * Process the certificate request.
  */
-static int ICACHE_FLASH_ATTR process_cert_req(SSL *ssl)
+static int process_cert_req(SSL *ssl)
 {
     uint8_t *buf = &ssl->bm_data[ssl->dc->bm_proc_index];
     int ret = SSL_OK;
@@ -356,7 +356,7 @@ error:
 /*
  * Send a certificate verify message.
  */
-static int ICACHE_FLASH_ATTR send_cert_verify(SSL *ssl)
+static int send_cert_verify(SSL *ssl)
 {
     uint8_t *buf = ssl->bm_data;
     uint8_t dgst[MD5_SIZE+SHA1_SIZE];

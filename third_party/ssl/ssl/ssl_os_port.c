@@ -97,115 +97,8 @@ static const char * out_of_mem_str = "out of memory %s %d\n";
 #define debug_now
 #endif
 
-#if 0
-static MEM_LEAK * ptr_start = NULL;  
-static MEM_LEAK * ptr_next =  NULL;
-xTaskHandle mem_mutex;
-#define name_length 128
 
-extern int mem_flag;
-void add(MEM_INFO alloc_info)
-{
-
-    MEM_LEAK * mem_leak_info = NULL;
-    mem_leak_info = (MEM_LEAK *)malloc(sizeof(MEM_LEAK));
-    mem_leak_info->mem_info.address = alloc_info.address;
-    mem_leak_info->mem_info.size = alloc_info.size;
-    strcpy(mem_leak_info->mem_info.file_name, alloc_info.file_name); 
-    mem_leak_info->mem_info.line = alloc_info.line;
-    mem_leak_info->next = NULL;
-
-    if (ptr_start == NULL)    
-    {
-        ptr_start = mem_leak_info;
-        ptr_next = ptr_start;
-    }
-    else {
-        ptr_next->next = mem_leak_info;
-        ptr_next = ptr_next->next;                
-    }
-	if(mem_flag) {
-		os_printf("mem_leak_info =%p\n",mem_leak_info);
-		mem_flag = 0;
-		report_mem_leak();
-	}
-
-}
-void erase(unsigned pos)
-{
-
-    unsigned index = 0;
-    MEM_LEAK * alloc_info, * temp;
-    
-    if(pos == 0)
-    {
-        MEM_LEAK * temp = ptr_start;
-        ptr_start = ptr_start->next;
-        free(temp);
-    }
-    else 
-    {
-        for(index = 0, alloc_info = ptr_start; index < pos; 
-            alloc_info = alloc_info->next, ++index)
-        {
-            if(pos == index + 1)
-            {
-                temp = alloc_info->next;
-                alloc_info->next =  temp->next;
-                free(temp);
-                break;
-            }
-        }
-    }
-}
-
-void clear()
-{
-    MEM_LEAK * temp = ptr_start;
-    MEM_LEAK * alloc_info = ptr_start;
-	
-    while(alloc_info != NULL) 
-    {
-        alloc_info = alloc_info->next;
-        free(temp);
-        temp = alloc_info;
-    }
-	
-}
-
-void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsigned int line)
-{	  
-	sys_mutex_lock(&mem_mutex);
-
-	MEM_INFO mem_alloc_info;        
-	memset( &mem_alloc_info, 0, sizeof ( mem_alloc_info ) );        
-	mem_alloc_info.address     = mem_ref;        
-	mem_alloc_info.size = size;        
-	strncpy(mem_alloc_info.file_name, file, FILE_NAME_LENGTH);        
-	mem_alloc_info.line = line;            
-	add(mem_alloc_info);   
-	sys_mutex_unlock(&mem_mutex);
-}
-void remove_mem_info (void * mem_ref)
-{
-    unsigned short index;
-    MEM_LEAK  * leak_info = ptr_start;
-	
-	sys_mutex_lock(&mem_mutex);
-    for(index = 0; leak_info != NULL; ++index, leak_info = leak_info->next)
-    {
-        if ( leak_info->mem_info.address == mem_ref )
-        {
-            erase ( index );
-            break;
-        }
-    }
-	
-	sys_mutex_unlock(&mem_mutex);
-}
-#endif
-
-EXP_FUNC void * ICACHE_FLASH_ATTR ax_malloc(size_t s, const char* file, int line)
+EXP_FUNC void* ax_malloc(size_t s, const char* file, int line)
 {
     void *x;
 
@@ -218,7 +111,7 @@ EXP_FUNC void * ICACHE_FLASH_ATTR ax_malloc(size_t s, const char* file, int line
 
     return x;
 }
-EXP_FUNC void * ICACHE_FLASH_ATTR ax_realloc(void *y, size_t s, const char* file, int line)
+EXP_FUNC void* ax_realloc(void *y, size_t s, const char* file, int line)
 {
     void *x;
 
@@ -231,7 +124,7 @@ EXP_FUNC void * ICACHE_FLASH_ATTR ax_realloc(void *y, size_t s, const char* file
 
     return x;
 }
-EXP_FUNC void * ICACHE_FLASH_ATTR ax_calloc(size_t n, size_t s, const char* file, int line)
+EXP_FUNC void* ax_calloc(size_t n, size_t s, const char* file, int line)
 {
     void *x;
 	//unsigned total_size =0;
@@ -245,7 +138,7 @@ EXP_FUNC void * ICACHE_FLASH_ATTR ax_calloc(size_t n, size_t s, const char* file
 
     return x;
 }
-EXP_FUNC void * ICACHE_FLASH_ATTR ax_zalloc(size_t s, const char* file, int line)
+EXP_FUNC void* ax_zalloc(size_t s, const char* file, int line)
 {
     void *x;
 
@@ -258,7 +151,7 @@ EXP_FUNC void * ICACHE_FLASH_ATTR ax_zalloc(size_t s, const char* file, int line
 
     return x;
 }
-EXP_FUNC void ICACHE_FLASH_ATTR ax_free(void *p, const char* file, int line)
+EXP_FUNC void ax_free(void *p, const char* file, int line)
 {
 	if(p) {
    		debug_now("%s %d point[%p] size[%d] heap[%d]\n", file, line, p,0, system_get_free_heap_size());

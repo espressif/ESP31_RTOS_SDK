@@ -21,11 +21,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "espressif/esp_common.h"
+#include "esp_common.h"
 
 void intr_matrix_set(uint32 model_num, uint32 intr_num)
 {
-    uint32 addr = INTR_MAP_REG_A + (model_num / 6) * 4;
+    uint32 addr = PRO_INTR_MAP_REG_A + (model_num / 6) * 4;
     uint32 shift = (model_num % 6) * 5;
 
     if (shift >= 15) {

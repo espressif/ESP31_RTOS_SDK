@@ -38,7 +38,7 @@
 /**
 * Initialize the SHA384 context 
 */
- void ICACHE_FLASH_ATTR SHA384_Init(SHA384_CTX *ctx)
+ void SHA384_Init(SHA384_CTX *ctx)
  {
     //Set initial hash value
     ctx->h_dig.h[0] = 0xCBBB9D5DC1059ED8ULL;
@@ -59,7 +59,7 @@
 /**
 * Accepts an array of octets as the next portion of the message.
 */
-void ICACHE_FLASH_ATTR SHA384_Update(SHA384_CTX *ctx, const uint8_t * msg, int len)
+void SHA384_Update(SHA384_CTX *ctx, const uint8_t * msg, int len)
 {
     // The function is defined in the exact same manner as SHA-512
     SHA512_Update(ctx, msg, len);
@@ -68,7 +68,7 @@ void ICACHE_FLASH_ATTR SHA384_Update(SHA384_CTX *ctx, const uint8_t * msg, int l
 /**
 * Return the 384-bit message digest into the user's array
 */
-void ICACHE_FLASH_ATTR SHA384_Final(uint8_t *digest, SHA384_CTX *ctx)
+void SHA384_Final(uint8_t *digest, SHA384_CTX *ctx)
 {
     // The function is defined in the exact same manner as SHA-512
     SHA512_Final(NULL, ctx);

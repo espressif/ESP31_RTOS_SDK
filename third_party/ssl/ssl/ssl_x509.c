@@ -46,7 +46,7 @@ EXP_FUNC void STDCALL gettimeofday(struct timeval* t,void* timezone);
 /**
  * Retrieve the signature from a certificate.
  */
-static const uint8_t * ICACHE_FLASH_ATTR get_signature(const uint8_t *asn1_sig, int *len)
+static const uint8_t * get_signature(const uint8_t *asn1_sig, int *len)
 {
     int offset = 0;
     const uint8_t *ptr = NULL;
@@ -70,7 +70,7 @@ end_get_sig:
  * Construct a new x509 object.
  * @return 0 if ok. < 0 if there was a problem.
  */
-int ICACHE_FLASH_ATTR x509_new(const uint8_t *cert, int *len, X509_CTX **ctx)
+int x509_new(const uint8_t *cert, int *len, X509_CTX **ctx)
 {
     int begin_tbs, end_tbs;
     int ret = X509_NOT_OK, offset = 0, cert_size = 0;
@@ -253,7 +253,7 @@ end_cert:
 /**
  * Free an X.509 object's resources.
  */
-void ICACHE_FLASH_ATTR x509_free(X509_CTX *x509_ctx)
+void x509_free(X509_CTX *x509_ctx)
 {
     X509_CTX *next;
     int i;
@@ -294,7 +294,7 @@ void ICACHE_FLASH_ATTR x509_free(X509_CTX *x509_ctx)
 /**
  * Take a signature and decrypt it.
  */
-static bigint *ICACHE_FLASH_ATTR sig_verify(BI_CTX *ctx, const uint8_t *sig, int sig_len,
+static bigint *sig_verify(BI_CTX *ctx, const uint8_t *sig, int sig_len,
         bigint *modulus, bigint *pub_exp)
 {
     int i, size;
@@ -346,7 +346,7 @@ static bigint *ICACHE_FLASH_ATTR sig_verify(BI_CTX *ctx, const uint8_t *sig, int
  * - The certificate chain is valid.
  * - The signature of the certificate is valid.
  */
-int ICACHE_FLASH_ATTR x509_verify(const CA_CERT_CTX *ca_cert_ctx, const X509_CTX *cert) 
+int x509_verify(const CA_CERT_CTX *ca_cert_ctx, const X509_CTX *cert) 
 {
     int ret = X509_OK, i = 0;
     bigint *cert_sig;
@@ -494,7 +494,7 @@ end_verify:
  * Used for diagnostics.
  */
 static const char *not_part_of_cert = "<Not Part Of Certificate>";
-void ICACHE_FLASH_ATTR x509_print(const X509_CTX *cert, CA_CERT_CTX *ca_cert_ctx) 
+void x509_print(const X509_CTX *cert, CA_CERT_CTX *ca_cert_ctx) 
 {
     if (cert == NULL)
         return;
@@ -575,7 +575,7 @@ void ICACHE_FLASH_ATTR x509_print(const X509_CTX *cert, CA_CERT_CTX *ca_cert_ctx
 }
 
 #if 0
-const char * ICACHE_FLASH_ATTR x509_display_error(int error)
+const char * x509_display_error(int error)
 {
     switch (error)
     {

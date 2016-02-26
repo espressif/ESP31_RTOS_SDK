@@ -27,7 +27,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/xtensa_api.h"
-#include "espressif/esp_common.h"
+#include "esp_common.h"
 #include "i2s.h"
 #include "gpio.h"
 #include <stdio.h>
@@ -375,11 +375,11 @@ void slc_init(void)
     //SET_PERI_REG_MASK(SLC_RX_DSCR_CONF,SLC_INFOR_NO_REPLACE|SLC_TOKEN_NO_REPLACE);//|0xfe
     //CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN|SLC_RX_EOF_MODE | SLC_RX_FILL_MODE);
 
-    //os_printf("INTR_MAP_REG_B:%08x\n\r",READ_PERI_REG(INTR_MAP_REG_B));
+    //os_printf("PRO_INTR_MAP_REG_B:%08x\n\r",READ_PERI_REG(INTR_MAP_REG_B));
 
-    SET_PERI_REG_BITS(INTR_MAP_REG_B, PRODPORT_INTR_MAP_9, 1, PRODPORT_INTR_MAP_9_S);
+    SET_PERI_REG_BITS(PRO_INTR_MAP_REG_B, PRODPORT_INTR_MAP_9, 1, PRODPORT_INTR_MAP_9_S);
 
-    //os_printf("INTR_MAP_REG_B:%08x\n\r",READ_PERI_REG(INTR_MAP_REG_B));
+    //os_printf("PRO_INTR_MAP_REG_B:%08x\n\r",READ_PERI_REG(INTR_MAP_REG_B));
 
     intr_matrix_set(ETS_SLC_SOURCE, ETS_SLC_INUM);
     xt_set_interrupt_handler(ETS_SLC_INUM, slc_isr, NULL);

@@ -62,7 +62,7 @@
 
 #include "ssl/ssl_os_port.h"
 #include "ssl/ssl_bigint.h"
-
+#include "ssl/sync_mod_power.h"
 
 #define V1      v->comps[v->size-1]                 /**< v1 for division */
 #define V2      v->comps[v->size-2]                 /**< v2 for division */
@@ -91,7 +91,7 @@ static void check(const bigint *bi);
  * @brief Start a new bigint context.
  * @return A bigint context.
  */
-BI_CTX * ICACHE_FLASH_ATTR bi_initialize(void)
+BI_CTX * bi_initialize(void)
 {
     /* calloc() sets everything to zero */
     BI_CTX *ctx = (BI_CTX *)SSL_ZALLOC(sizeof(BI_CTX));
@@ -111,7 +111,7 @@ BI_CTX * ICACHE_FLASH_ATTR bi_initialize(void)
  * properly freed.
  * @param ctx [in]   The bigint session context.
  */
-void ICACHE_FLASH_ATTR bi_terminate(BI_CTX *ctx)
+void bi_terminate(BI_CTX *ctx)
 {
     bi_depermanent(ctx->bi_radix); 
     bi_free(ctx, ctx->bi_radix);
@@ -132,7 +132,7 @@ void ICACHE_FLASH_ATTR bi_terminate(BI_CTX *ctx)
 /**
  *@brief Clear the memory cache.
  */
-void ICACHE_FLASH_ATTR bi_clear_cache(BI_CTX *ctx)
+void bi_clear_cache(BI_CTX *ctx)
 {
     bigint *p, *pn;
 
@@ -156,7 +156,7 @@ void ICACHE_FLASH_ATTR bi_clear_cache(BI_CTX *ctx)
  * @param bi [in]   The bigint to copy.
  * @return A reference to the same bigint.
  */
-bigint * ICACHE_FLASH_ATTR bi_copy(bigint *bi)
+bigint * bi_copy(bigint *bi)
 {
     check(bi);
     if (bi->refs != PERMANENT)
@@ -170,7 +170,7 @@ bigint * ICACHE_FLASH_ATTR bi_copy(bigint *bi)
  * For this object to be freed, bi_depermanent() must be called.
  * @param bi [in]   The bigint to be made permanent.
  */
-void ICACHE_FLASH_ATTR bi_permanent(bigint *bi)
+void bi_permanent(bigint *bi)
 {
     check(bi);
     if (bi->refs != 1)
@@ -188,7 +188,7 @@ void ICACHE_FLASH_ATTR bi_permanent(bigint *bi)
  * @brief Take a permanent object and make it eligible for freedom.
  * @param bi [in]   The bigint to be made back to temporary.
  */
-void ICACHE_FLASH_ATTR bi_depermanent(bigint *bi)
+void bi_depermanent(bigint *bi)
 {
     check(bi);
     if (bi->refs != PERMANENT)
@@ -209,7 +209,7 @@ void ICACHE_FLASH_ATTR bi_depermanent(bigint *bi)
  * @param ctx [in]   The bigint session context.
  * @param bi [in]    The bigint to be freed.
  */
-void ICACHE_FLASH_ATTR bi_free(BI_CTX *ctx, bigint *bi)
+void bi_free(BI_CTX *ctx, bigint *bi)
 {
     check(bi);
     if (bi->refs == PERMANENT)
@@ -242,7 +242,7 @@ void ICACHE_FLASH_ATTR bi_free(BI_CTX *ctx, bigint *bi)
  * @param i [in]     The (unsigned) integer to be converted.
  * 
  */
-bigint * ICACHE_FLASH_ATTR int_to_bi(BI_CTX *ctx, comp i)
+bigint * int_to_bi(BI_CTX *ctx, comp i)
 {
     bigint *biR = alloc(ctx, 1);
     biR->comps[0] = i;
@@ -254,7 +254,7 @@ bigint * ICACHE_FLASH_ATTR int_to_bi(BI_CTX *ctx, comp i)
  * @param ctx [in]   The bigint session context.
  * @param bi  [in]   The bigint object to be copied.
  */
-bigint * ICACHE_FLASH_ATTR bi_clone(BI_CTX *ctx, const bigint *bi)
+bigint * bi_clone(BI_CTX *ctx, const bigint *bi)
 {
     bigint *biR = alloc(ctx, bi->size);
     check(bi);
@@ -269,7 +269,7 @@ bigint * ICACHE_FLASH_ATTR bi_clone(BI_CTX *ctx, const bigint *bi)
  * @param bib [in]  Another bigint.
  * @return The result of the addition.
  */
-bigint * ICACHE_FLASH_ATTR bi_add(BI_CTX *ctx, bigint *bia, bigint *bib)
+bigint * bi_add(BI_CTX *ctx, bigint *bia, bigint *bib)
 {
     int n;
     comp carry = 0;
@@ -308,7 +308,7 @@ bigint * ICACHE_FLASH_ATTR bi_add(BI_CTX *ctx, bigint *bia, bigint *bib)
  * is_negative may be null.
  * @return The result of the subtraction. The result is always positive.
  */
-bigint * ICACHE_FLASH_ATTR bi_subtract(BI_CTX *ctx, 
+bigint * bi_subtract(BI_CTX *ctx, 
         bigint *bia, bigint *bib, int *is_negative)
 {
     int n = bia->size;
@@ -343,7 +343,7 @@ bigint * ICACHE_FLASH_ATTR bi_subtract(BI_CTX *ctx,
 /**
  * Perform a multiply between a bigint an an (unsigned) integer
  */
-static bigint * ICACHE_FLASH_ATTR bi_int_multiply(BI_CTX *ctx, bigint *bia, comp b)
+static bigint * bi_int_multiply(BI_CTX *ctx, bigint *bia, comp b)
 {
     int j = 0, n = bia->size;
     bigint *biR = alloc(ctx, n + 1);
@@ -379,7 +379,7 @@ static bigint * ICACHE_FLASH_ATTR bi_int_multiply(BI_CTX *ctx, bigint *bia, comp
  * (1).
  * @return  The result of the division/reduction.
  */
-bigint * ICACHE_FLASH_ATTR bi_divide(BI_CTX *ctx, bigint *u, bigint *v, int is_mod)
+bigint * bi_divide(BI_CTX *ctx, bigint *u, bigint *v, int is_mod)
 {
     int n = v->size, m = u->size-n;
     int j = 0, orig_u_size = u->size;
@@ -502,7 +502,7 @@ bigint * ICACHE_FLASH_ATTR bi_divide(BI_CTX *ctx, bigint *u, bigint *v, int is_m
 /*
  * Perform an integer divide on a bigint.
  */
-static bigint * ICACHE_FLASH_ATTR bi_int_divide(BI_CTX *ctx, bigint *biR, comp denom)
+static bigint * bi_int_divide(BI_CTX *ctx, bigint *biR, comp denom)
 {
     int i = biR->size - 1;
     long_comp r = 0;
@@ -526,7 +526,7 @@ static bigint * ICACHE_FLASH_ATTR bi_int_divide(BI_CTX *ctx, bigint *biR, comp d
  * N' is needed, hence the definition N0'=N' mod b. We reproduce below the 
  * simple algorithm from an article by Dusse and Kaliski to efficiently 
  * find N0' from N0 and b */
-static comp ICACHE_FLASH_ATTR modular_inverse(bigint *bim)
+static comp modular_inverse(bigint *bim)
 {
     int i;
     comp t = 1;
@@ -554,7 +554,7 @@ static comp ICACHE_FLASH_ATTR modular_inverse(bigint *bim)
 /**
  * Take each component and shift down (in terms of components) 
  */
-static bigint * ICACHE_FLASH_ATTR comp_right_shift(bigint *biR, int num_shifts)
+static bigint * comp_right_shift(bigint *biR, int num_shifts)
 {
     int i = biR->size-num_shifts;
     comp *x = biR->comps;
@@ -581,7 +581,7 @@ static bigint * ICACHE_FLASH_ATTR comp_right_shift(bigint *biR, int num_shifts)
 /**
  * Take each component and shift it up (in terms of components) 
  */
-static bigint * ICACHE_FLASH_ATTR comp_left_shift(bigint *biR, int num_shifts)
+static bigint * comp_left_shift(bigint *biR, int num_shifts)
 {
     int i = biR->size-1;
     comp *x, *y;
@@ -615,7 +615,7 @@ static bigint * ICACHE_FLASH_ATTR comp_left_shift(bigint *biR, int num_shifts)
  * @param size [in] The number of bytes of data.
  * @return A bigint representing this data.
  */
-bigint * ICACHE_FLASH_ATTR bi_import(BI_CTX *ctx, const uint8_t *data, int size)
+bigint * bi_import(BI_CTX *ctx, const uint8_t *data, int size)
 {
     bigint *biR = alloc(ctx, (size+COMP_BYTE_SIZE-1)/COMP_BYTE_SIZE);
     int i, j = 0, offset = 0;
@@ -645,7 +645,7 @@ bigint * ICACHE_FLASH_ATTR bi_import(BI_CTX *ctx, const uint8_t *data, int size)
  * be in upper case.
  * @return A bigint representing this data.
  */
-bigint * ICACHE_FLASH_ATTR bi_str_import(BI_CTX *ctx, const char *data)
+bigint * bi_str_import(BI_CTX *ctx, const char *data)
 {
     int size = strlen(data);
     bigint *biR = alloc(ctx, (size+COMP_NUM_NIBBLES-1)/COMP_NUM_NIBBLES);
@@ -667,7 +667,7 @@ bigint * ICACHE_FLASH_ATTR bi_str_import(BI_CTX *ctx, const char *data)
     return biR;
 }
 
-void ICACHE_FLASH_ATTR bi_print(const char *label, bigint *x)
+void bi_print(const char *label, bigint *x)
 {
     int i, j;
 
@@ -702,7 +702,7 @@ void ICACHE_FLASH_ATTR bi_print(const char *label, bigint *x)
  * @param size [in] The maximum size of the byte stream. Unused bytes will be
  * zeroed.
  */
-void ICACHE_FLASH_ATTR bi_export(BI_CTX *ctx, bigint *x, uint8_t *data, int size)
+void bi_export(BI_CTX *ctx, bigint *x, uint8_t *data, int size)
 {
     int i, j, k = size-1;
 
@@ -741,7 +741,7 @@ buf_done:
  * modulus we are referring to.
  * @see bi_free_mod(), bi_mod_power().
  */
-void ICACHE_FLASH_ATTR bi_set_mod(BI_CTX *ctx, bigint *bim, int mod_offset)
+void bi_set_mod(BI_CTX *ctx, bigint *bim, int mod_offset)
 {
     int k = bim->size;
     comp d = (comp)((long_comp)COMP_RADIX/(bim->comps[k-1]+1));
@@ -780,7 +780,7 @@ void ICACHE_FLASH_ATTR bi_set_mod(BI_CTX *ctx, bigint *bim, int mod_offset)
  * @param mod_offset [in] The offset to use.
  * @see bi_set_mod().
  */
-void ICACHE_FLASH_ATTR bi_free_mod(BI_CTX *ctx, int mod_offset)
+void bi_free_mod(BI_CTX *ctx, int mod_offset)
 {
     bi_depermanent(ctx->bi_mod[mod_offset]);
     bi_free(ctx, ctx->bi_mod[mod_offset]);
@@ -806,7 +806,7 @@ void ICACHE_FLASH_ATTR bi_free_mod(BI_CTX *ctx, int mod_offset)
  */
 
 
-static bigint * ICACHE_FLASH_ATTR regular_multiply(BI_CTX *ctx, bigint *bia, bigint *bib, 
+static bigint * regular_multiply(BI_CTX *ctx, bigint *bia, bigint *bib, 
         int inner_partial, int outer_partial)
 {
     int i = 0, j;
@@ -862,7 +862,7 @@ static bigint * ICACHE_FLASH_ATTR regular_multiply(BI_CTX *ctx, bigint *bia, big
  * being done instead of 4. The additional additions/subtractions are O(N) 
  * rather than O(N^2) and so for big numbers it saves on a few operations 
  */
-static bigint * ICACHE_FLASH_ATTR karatsuba(BI_CTX *ctx, bigint *bia, bigint *bib, int is_square)
+static bigint * karatsuba(BI_CTX *ctx, bigint *bia, bigint *bib, int is_square)
 {
     bigint *x0, *x1;
     bigint *p0, *p1, *p2;
@@ -920,7 +920,7 @@ static bigint * ICACHE_FLASH_ATTR karatsuba(BI_CTX *ctx, bigint *bia, bigint *bi
  * @param bib [in]  Another bigint.
  * @return The result of the multiplication.
  */
-bigint * ICACHE_FLASH_ATTR bi_multiply(BI_CTX *ctx, bigint *bia, bigint *bib)
+bigint * bi_multiply(BI_CTX *ctx, bigint *bia, bigint *bib)
 {
     check(bia);
     check(bib);
@@ -941,7 +941,7 @@ bigint * ICACHE_FLASH_ATTR bi_multiply(BI_CTX *ctx, bigint *bia, bigint *bib)
 /*
  * Perform the actual square operion. It takes into account overflow.
  */
-static bigint * ICACHE_FLASH_ATTR regular_square(BI_CTX *ctx, bigint *bi)
+static bigint * regular_square(BI_CTX *ctx, bigint *bi)
 {
     int t = bi->size;
     int i = 0, j;
@@ -997,7 +997,7 @@ static bigint * ICACHE_FLASH_ATTR regular_square(BI_CTX *ctx, bigint *bi)
  * @param bia [in]  A bigint.
  * @return The result of the multiplication.
  */
-bigint * ICACHE_FLASH_ATTR bi_square(BI_CTX *ctx, bigint *bia)
+bigint * bi_square(BI_CTX *ctx, bigint *bia)
 {
     check(bia);
 
@@ -1020,7 +1020,7 @@ bigint * ICACHE_FLASH_ATTR bi_square(BI_CTX *ctx, bigint *bia)
  * @param bib [in]  Another bigint.
  * @return -1 if smaller, 1 if larger and 0 if equal.
  */
-int ICACHE_FLASH_ATTR bi_compare(bigint *bia, bigint *bib)
+int bi_compare(bigint *bia, bigint *bib)
 {
     int r, i;
 
@@ -1062,7 +1062,7 @@ int ICACHE_FLASH_ATTR bi_compare(bigint *bia, bigint *bib)
 /*
  * Allocate and zero more components.  Does not consume bi. 
  */
-static void ICACHE_FLASH_ATTR more_comps(bigint *bi, int n)
+static void more_comps(bigint *bi, int n)
 {
 	comp * bi_backs = NULL;
     if (n > bi->max_comps)
@@ -1091,7 +1091,7 @@ static void ICACHE_FLASH_ATTR more_comps(bigint *bi, int n)
  * Make a new empty bigint. It may just use an old one if one is available.
  * Otherwise get one off the heap.
  */
-static bigint * ICACHE_FLASH_ATTR alloc(BI_CTX *ctx, int size)
+static bigint * alloc(BI_CTX *ctx, int size)
 {
     bigint *biR;
 
@@ -1131,7 +1131,7 @@ static bigint * ICACHE_FLASH_ATTR alloc(BI_CTX *ctx, int size)
  * Work out the highest '1' bit in an exponent. Used when doing sliding-window
  * exponentiation.
  */
-static int ICACHE_FLASH_ATTR find_max_exp_index(bigint *biexp)
+static int find_max_exp_index(bigint *biexp)
 {
     int i = COMP_BIT_SIZE-1;
     comp shift = COMP_RADIX/2;
@@ -1156,7 +1156,7 @@ static int ICACHE_FLASH_ATTR find_max_exp_index(bigint *biexp)
  * Is a particular bit is an exponent 1 or 0? Used when doing sliding-window
  * exponentiation.
  */
-static int ICACHE_FLASH_ATTR exp_bit_is_one(bigint *biexp, int offset)
+static int exp_bit_is_one(bigint *biexp, int offset)
 {
     comp test = biexp->comps[offset / COMP_BIT_SIZE];
     int num_shifts = offset % COMP_BIT_SIZE;
@@ -1177,7 +1177,7 @@ static int ICACHE_FLASH_ATTR exp_bit_is_one(bigint *biexp, int offset)
 /*
  * Perform a sanity check on bi.
  */
-static void ICACHE_FLASH_ATTR check(const bigint *bi)
+static void check(const bigint *bi)
 {
     if (bi->refs <= 0)
     {
@@ -1197,7 +1197,7 @@ static void ICACHE_FLASH_ATTR check(const bigint *bi)
 /*
  * Delete any leading 0's (and allow for 0).
  */
-static bigint * ICACHE_FLASH_ATTR trim(bigint *bi)
+static bigint * trim(bigint *bi)
 {
     check(bi);
 
@@ -1216,7 +1216,7 @@ static bigint * ICACHE_FLASH_ATTR trim(bigint *bi)
  * @param bixy [in]  A bigint.
  * @return The result of the montgomery reduction.
  */
-bigint * ICACHE_FLASH_ATTR bi_mont(BI_CTX *ctx, bigint *bixy)
+bigint * bi_mont(BI_CTX *ctx, bigint *bixy)
 {
     int i = 0, n;
     uint8_t mod_offset = ctx->mod_offset;
@@ -1253,7 +1253,7 @@ bigint * ICACHE_FLASH_ATTR bi_mont(BI_CTX *ctx, bigint *bixy)
  * Stomp on the most significant components to give the illusion of a "mod base
  * radix" operation 
  */
-static bigint * ICACHE_FLASH_ATTR comp_mod(bigint *bi, int mod)
+static bigint * comp_mod(bigint *bi, int mod)
 {
     check(bi);
 
@@ -1271,7 +1271,7 @@ static bigint * ICACHE_FLASH_ATTR comp_mod(bigint *bi, int mod)
  * @param bi [in]  A bigint.
  * @return The result of the Barrett reduction.
  */
-bigint * ICACHE_FLASH_ATTR bi_barrett(BI_CTX *ctx, bigint *bi)
+bigint * bi_barrett(BI_CTX *ctx, bigint *bi)
 {
     bigint *q1, *q2, *q3, *r1, *r2, *r;
     uint8_t mod_offset = ctx->mod_offset;
@@ -1312,7 +1312,7 @@ bigint * ICACHE_FLASH_ATTR bi_barrett(BI_CTX *ctx, bigint *bi)
 /*
  * Work out g1, g3, g5, g7... etc for the sliding-window algorithm 
  */
-static void ICACHE_FLASH_ATTR precompute_slide_window(BI_CTX *ctx, int window, bigint *g1)
+static void precompute_slide_window(BI_CTX *ctx, int window, bigint *g1)
 {
     int k = 1, i;
     bigint *g2;
@@ -1338,6 +1338,57 @@ static void ICACHE_FLASH_ATTR precompute_slide_window(BI_CTX *ctx, int window, b
 }
 #endif
 
+#ifndef SOFTWARE_CRYPTO
+static bigint * hw_bi_mod_power(BI_CTX *ctx, bigint *bi, bigint *biexp)
+{
+    uint8_t mod_offset = ctx->mod_offset;
+    
+    bigint *biRR = ctx->bi_RR_mod_m[mod_offset];
+    bigint *modulus = ctx->bi_mod[mod_offset];
+    comp   *biN0 = ctx->N0_dash;
+
+    /*enc/dec data should be the same length with plaintext*/
+    bigint *biR = alloc(ctx, modulus->size);
+
+    /*check the bigint format*/
+    check(bi);
+    check(biexp);
+    check(biRR);
+    check(modulus);
+
+    uint32_t *pdada;
+    /*enable the bimodpower module*/
+    sync_bi_mode_power_enable();
+    
+    /*set M, m_dash*/
+	sync_bi_mode_power_setm((uint32 *)modulus->comps, biN0[mod_offset],modulus->size*COMP_BIT_SIZE);
+    pdada=bi->comps;
+   
+    /*set plaintext*/
+	sync_bi_mode_power_setx((uint32 *)bi->comps, bi->size*COMP_BIT_SIZE);
+    pdada=biexp->comps;
+    
+    /*set exp*/
+	sync_bi_mode_power_sety((uint32 *)biexp->comps, biexp->size*COMP_BIT_SIZE);
+    
+    /*set rbar*/
+	sync_bi_mode_power_setrb((uint32 *)biRR->comps, biRR->size*COMP_BIT_SIZE);
+    /*set the mode*/
+	sync_bi_mode_power_setmode(modulus->size*COMP_BIT_SIZE);
+    /*start*/
+	sync_bi_mode_power_start();
+    /*get the result*/
+	sync_bi_mode_power_getz((uint32 *)biR->comps, biR->size*COMP_BIT_SIZE);
+    /*disable the bimodpower module*/
+    sync_bi_mode_power_disable();
+
+    bi_free(ctx, bi);
+    bi_free(ctx, biexp);
+
+    return biR;
+}
+#endif
+
 /**
  * @brief Perform a modular exponentiation.
  *
@@ -1349,8 +1400,9 @@ static void ICACHE_FLASH_ATTR precompute_slide_window(BI_CTX *ctx, int window, b
  * @return The result of the mod exponentiation operation
  * @see bi_set_mod().
  */
-bigint * ICACHE_FLASH_ATTR bi_mod_power(BI_CTX *ctx, bigint *bi, bigint *biexp)
+bigint * bi_mod_power(BI_CTX *ctx, bigint *bi, bigint *biexp)
 {
+#ifdef SOFTWARE_CRYPTO
     int i = find_max_exp_index(biexp), j, window_size = 1;
     bigint *biR = int_to_bi(ctx, 1);
 
@@ -1436,6 +1488,9 @@ bigint * ICACHE_FLASH_ATTR bi_mod_power(BI_CTX *ctx, bigint *bi, bigint *biexp)
 #else /* CONFIG_BIGINT_CLASSICAL or CONFIG_BIGINT_BARRETT */
     return biR;
 #endif
+#else
+	return hw_bi_mod_power(ctx, bi, biexp);
+#endif
 }
 
 #ifdef CONFIG_SSL_CERT_VERIFICATION
@@ -1451,7 +1506,7 @@ bigint * ICACHE_FLASH_ATTR bi_mod_power(BI_CTX *ctx, bigint *bi, bigint *biexp)
  * @return The result of the mod exponentiation operation
  * @see bi_set_mod().
  */
-bigint * ICACHE_FLASH_ATTR bi_mod_power2(BI_CTX *ctx, bigint *bi, bigint *bim, bigint *biexp)
+bigint * bi_mod_power2(BI_CTX *ctx, bigint *bi, bigint *bim, bigint *biexp)
 {
     bigint *biR, *tmp_biR;
 
@@ -1489,7 +1544,7 @@ bigint * ICACHE_FLASH_ATTR bi_mod_power2(BI_CTX *ctx, bigint *bi, bigint *bim, b
  * @param qInv [in] CRT's qInv bigint
  * @return The result of the CRT operation
  */
-bigint * ICACHE_FLASH_ATTR bi_crt(BI_CTX *ctx, bigint *bi,
+bigint * bi_crt(BI_CTX *ctx, bigint *bi,
         bigint *dP, bigint *dQ,
         bigint *p, bigint *q, bigint *qInv)
 {

@@ -20,10 +20,26 @@ else
     OBJDUMP = xtensa-esp108-elf-objdump
 endif
 
-BIN_PATH ?= $(SDK_PATH)/bin
+BIN_PATH ?= ./bin
 
-LD_FILE = $(LDDIR)/eagle.pro.v7.ld
-BIN_NAME = user
+ESP_COMPILE_APP_CPU ?= 0
+ESP_COMBINE_APP_CPU_BIN ?= 0
+
+ESP_LOCAL_LD ?= 0
+ESP_MAP_MODE ?= 1.1
+
+ifeq ($(ESP_COMPILE_APP_CPU), 1)
+	LD_FILE_CORE = $(SDK_PATH)/ld/app.map.ld
+	LD_FILE = $(SDK_PATH)/ld/app.map.ld $(SDK_PATH)/ld/app.rom.addr.ld
+else
+	ifeq ($(ESP_LOCAL_LD), 1)
+		LD_FILE_CORE = ./ld/$(ESP_LD_FILE)
+		LD_FILE = $(LD_FILE_CORE) $(SDK_PATH)/ld/pro.rom.addr.ld
+	else
+		LD_FILE_CORE = $(SDK_PATH)/ld/pro.map$(ESP_MAP_MODE).ld
+		LD_FILE = $(LD_FILE_CORE) $(SDK_PATH)/ld/pro.rom.addr.ld
+	endif
+endif
 
 CSRCS ?= $(wildcard *.c)
 CPPSRCS ?= $(wildcard *.cpp)
@@ -70,7 +86,6 @@ CCFLAGS +=                  \
 CFLAGS = $(CCFLAGS) $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 DFLAGS = $(CCFLAGS) $(DDEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 
-
 #############################################################
 # Functions
 #
@@ -108,32 +123,28 @@ endef
 $(BINODIR)/%.bin: $(IMAGEODIR)/%.out
 	@$(CheckBinPath)
 
-	@$(RM) -r $(BIN_PATH)/$(BIN_NAME).S $(BIN_PATH)/$(BIN_NAME).dump
+	@$(RM) -r $(BIN_PATH)/user.S $(BIN_PATH)/user.dump
 
-	@$(OBJDUMP) -x -s $< > $(BIN_PATH)/$(BIN_NAME).dump
-	@$(OBJDUMP) -S $< > $(BIN_PATH)/$(BIN_NAME).S
+	@$(OBJDUMP) -x -s $< > $(BIN_PATH)/user.dump
+	@$(OBJDUMP) -S $< > $(BIN_PATH)/user.S
 
 	@$(OBJCOPY) --only-section .text -O binary $< eagle.app.v7.text.bin
 	@$(OBJCOPY) --only-section .data -O binary $< eagle.app.v7.data.bin
 	@$(OBJCOPY) --only-section .rodata -O binary $< eagle.app.v7.rodata.bin
 	@$(OBJCOPY) --only-section .irom0.text -O binary $< eagle.app.v7.irom0text.bin
-	@$(OBJCOPY) --only-section .irom1.text -O binary $< eagle.app.v7.irom1text.bin
-
-	@rm -f irom0_flash.bin irom1.bin
-
-	@python $(SDK_PATH)/tools/gen_appbin.py  $< $(SDK_PATH)/ld
-
-	@mv eagle.app.flash.bin $(BIN_PATH)/$(BIN_NAME).ota
-
-	@-mv irom1.bin $(BIN_PATH)/irom1.bin &>/dev/null
-	@-mv irom0_flash.bin $(BIN_PATH)/irom0_flash.bin &>/dev/null
+	@$(OBJCOPY) --only-section .drom0.text -O binary $< eagle.app.v7.drom0text.bin
 	
-	@rm eagle.app.v7.*
-	@echo "Generate related files successully in folder $(BIN_PATH)"	
-	@echo "boot.bin------------------>0x00000"
-	@echo "irom1.bin----------------->0x04000" 
-	@echo "irom0_flash.bin----------->0x40000"
-	@echo "user.ota------------------>(used for OTA)"
+ifeq ($(ESP_COMPILE_APP_CPU), 0)
+	@$(RM) -r $(BIN_PATH)/irom0_flash.bin $(BIN_PATH)/drom0.bin
+	@$(RM) -r $(BIN_PATH)/user.ota
+	
+	@python $(SDK_PATH)/tools/gen_appbin.py $< $(LD_FILE_CORE) $(ESP_COMPILE_APP_CPU) $(ESP_COMBINE_APP_CPU_BIN) $(SDK_PATH)/bin/app_cpu.bin $(BIN_PATH)
+else
+	@$(RM) -r $(BIN_PATH)/app_cpu.bin
+	@python $(SDK_PATH)/tools/gen_appbin.py $< $(LD_FILE_CORE) $(ESP_COMPILE_APP_CPU) $(ESP_COMBINE_APP_CPU_BIN) $(BIN_PATH)/app_cpu.bin $(BIN_PATH)
+endif
+
+	@rm -f eagle.app.v7.*
 
 #############################################################
 # Rules base
@@ -232,9 +243,68 @@ $(foreach image,$(GEN_IMAGES),$(eval $(call MakeImage,$(basename $(image)))))
 # Required for each makefile to inherit from the parent
 #
 
-INCLUDES := $(INCLUDES) -I $(SDK_PATH)/include
-INCLUDES += -I $(SDK_PATH)/extra_include        \
-            -I $(SDK_PATH)/include/lwip         \
-            -I $(SDK_PATH)/include/lwip/ipv4    \
-            -I $(SDK_PATH)/include/lwip/ipv6    \
-            -I $(SDK_PATH)/include/espressif
+INCLUDES += -I $(SDK_PATH)/driver_lib/include
+INCLUDES += -I $(SDK_PATH)/extra_include -I $(SDK_PATH)/include
+INCLUDES += -I $(SDK_PATH)/third_party/include
+INCLUDES += -I $(SDK_PATH)/third_party/include/cjson
+INCLUDES += -I $(SDK_PATH)/third_party/include/freertos
+INCLUDES += -I $(SDK_PATH)/third_party/include/http
+INCLUDES += -I $(SDK_PATH)/third_party/include/lwip -I $(SDK_PATH)/third_party/include/lwip/ipv4 -I $(SDK_PATH)/third_party/include/lwip/ipv6
+INCLUDES += -I $(SDK_PATH)/third_party/include/ssl
+
+ESP_TOOL ?= $(SDK_PATH)/tools/esptool.py
+ESP_PORT ?= /dev/ttyUSB0
+ESP_BAUD ?= 230400
+
+ESP_FS ?= 1MB
+ESP_FF ?= 40m
+ESP_FM ?= qio
+
+# 1MB spi Flash
+ifeq ($(ESP_FS), 1MB)
+ESP_RFINIT_ADDR = 0xFC000
+ESP_SYSPARAM_ADDR = 0xFE000
+endif
+
+# 2MB spi Flash
+ifeq ($(ESP_FS), 2MB)
+ESP_RFINIT_ADDR = 0x1FC000
+ESP_SYSPARAM_ADDR = 0x1FE000
+endif
+
+# 4MB spi Flash
+ifeq ($(ESP_FS), 4MB)
+ESP_RFINIT_ADDR = 0x3FC000
+ESP_SYSPARAM_ADDR = 0x3FE000
+endif
+
+# 8MB spi Flash
+ifeq ($(ESP_FS), 8MB)
+ESP_RFINIT_ADDR = 0x7FC000
+ESP_SYSPARAM_ADDR = 0x7FE000
+endif
+
+# 16MB spi Flash
+ifeq ($(ESP_FS), 16MB)
+ESP_RFINIT_ADDR = 0xFFC000
+ESP_SYSPARAM_ADDR = 0xFFE000
+endif
+
+flash_all:
+	$(ESP_TOOL) -c ESP32 -p $(ESP_PORT) -b $(ESP_BAUD) write_flash -fs $(ESP_FS) -fm $(ESP_FM) -ff $(ESP_FF)	\
+	0x0 $(SDK_PATH)/bin/boot.bin	\
+	0x04000 $(BIN_PATH)/drom0.bin 0x40000 $(BIN_PATH)/irom0_flash.bin	\
+	$(ESP_SYSPARAM_ADDR) $(SDK_PATH)/bin/blank.bin
+
+flash_boot:
+	$(ESP_TOOL) -c ESP32 -p $(ESP_PORT) -b $(ESP_BAUD) write_flash -fs $(ESP_FS) -fm $(ESP_FM) -ff $(ESP_FF)	\
+	0x0 $(SDK_PATH)/bin/boot.bin
+
+flash_app:
+	$(ESP_TOOL) -c ESP32 -p $(ESP_PORT) -b $(ESP_BAUD) write_flash	\
+	0x04000 $(BIN_PATH)/drom0.bin 0x40000 $(BIN_PATH)/irom0_flash.bin
+	minicom
+
+flash_blank:
+	$(ESP_TOOL) -c ESP32 -p $(ESP_PORT) -b $(ESP_BAUD) write_flash	\
+	$(ESP_SYSPARAM_ADDR) $(SDK_PATH)/bin/blank.bin

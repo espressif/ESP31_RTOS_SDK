@@ -27,7 +27,7 @@
 #include "freertos/queue.h"
 #include "freertos/xtensa_api.h"
 
-#include "espressif/esp_common.h"
+#include "esp_common.h"
 #include "uart.h"
 #include "gpio.h"
 #include <stdio.h>
