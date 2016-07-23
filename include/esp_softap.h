@@ -27,6 +27,9 @@
 
 #include "queue.h"
 
+#include "esp_wifi.h"
+#include "esp_misc.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -63,7 +66,7 @@ struct station_info {
     STAILQ_ENTRY(station_info)     next;    /**< Information of next AP */
 
     uint8 bssid[6];                         /**< BSSID of AP */
-    struct ip_addr ip;                      /**< IP address of AP */
+    ip4_addr_t ip;                      /**< IP address of AP */
 };
 
 /**

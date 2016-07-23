@@ -95,7 +95,8 @@ void update_firmware(void)
 {
     os_printf("update  firmware\r\n");
 
-    uint8 server_ip[4];
+    ip4_addr_t *server_ip;
+    bool ret;
     char *bin_url = "ray/user.ota";
     struct upgrade_info *server = NULL;
     uint8 current_id;
@@ -105,14 +106,14 @@ void update_firmware(void)
 
     server->check_times = 120000;
 
-    const char esp_server_ip[4] = {192, 168, 1, 11};
-    memcpy(server_ip, esp_server_ip, 4);
+    server_ip->addr=ipaddr_addr("192, 168, 1, 11");
+    //memcpy(server_ip, esp_server_ip, 4);
 
     if (server->s_if.http_req == NULL) {
         server->s_if.http_req = (uint8 *)malloc(512);
     }
 
-#ifdef SYMMETRY_STRUCTURE_MODE
+#if SYMMETRY_STRUCTURE_MODE
     if (system_get_current_bin_id() == 0) {
         enum flash_size f_size = system_get_flash_size();
 
@@ -159,7 +160,7 @@ void update_firmware(void)
 
     uint8 BIN_ID;
     uint8 START_FLASH_ID;
-    current_id = system_get_current_bin_id()
+    current_id = system_get_current_bin_id();
 
     if (current_id == 0) {
         BIN_ID = 1;
@@ -167,13 +168,13 @@ void update_firmware(void)
     } else if (current_id == 1) {
         BIN_ID = 2;
         START_FLASH_ID = 4;
-    } else (current_id == 2) {
+    } else if(current_id == 2) {
         BIN_ID = 0;
         START_FLASH_ID = 0;
     }
 
     if (false == system_upgrade_init(BIN_ID, START_FLASH_ID)) {
-        os_printf("init user bin %d falied ,error code %d\n", CONFIG_BIN_ID, system_upgrade_get_error_id());
+        os_printf("init user bin %d falied ,error code %d\n", BIN_ID, system_upgrade_get_error_id());
         return;
     }
 #endif

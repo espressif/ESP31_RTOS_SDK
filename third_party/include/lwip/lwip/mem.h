@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -11,26 +11,26 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_MEM_H__
-#define __LWIP_MEM_H__
+#ifndef LWIP_HDR_MEM_H
+#define LWIP_HDR_MEM_H
 
 #include "lwip/opt.h"
 
@@ -50,23 +50,53 @@ typedef size_t mem_size_t;
 /* in case C library malloc() needs extra protection,
  * allow these defines to be overridden.
  */
+
+#ifndef MEMLEAK_DEBUG
+
 #ifndef mem_free
-extern void vPortFree( void *pv );
-#define mem_free vPortFree
+#define mem_free free
 #endif
 #ifndef mem_malloc
-extern void *pvPortMalloc( size_t xWantedSize );
-#define mem_malloc pvPortMalloc
+#define mem_malloc malloc
 #endif
 #ifndef mem_calloc
-#define mem_calloc pvPortCalloc
+#define mem_calloc calloc
 #endif
+
+/*      DYC_NEED_TO_DO_LATER
 #ifndef mem_realloc
-#define mem_realloc pvPortRealloc
+#define mem_realloc 
 #endif
 #ifndef mem_zalloc
-#define mem_zalloc pvPortZalloc
+#define mem_zalloc
 #endif
+*/
+
+#else
+/*
+#ifndef mem_free
+#define mem_free(s) \
+	do{\
+		const char *file = mem_debug_file;\
+		vPortFree(s, file, __LINE__);\
+	}while(0)
+#endif
+#ifndef mem_malloc
+#define mem_malloc(s) ({const char *file = mem_debug_file; pvPortMalloc(s, file, __LINE__);})
+#endif
+#ifndef mem_calloc
+#define mem_calloc(s) ({const char *file = mem_debug_file; pvPortCalloc(s, file, __LINE__);})
+#endif
+#ifndef mem_realloc
+#define mem_realloc(p, s) ({const char *file = mem_debug_file; pvPortRealloc(p, s, file, __LINE__);})
+#endif
+#ifndef mem_zalloc
+#define mem_zalloc(s) ({const char *file = mem_debug_file; pvPortZalloc(s, file, __LINE__);})
+#endif
+*/
+#endif
+
+
 
 /* Since there is no C library allocation function to shrink memory without
    moving it, define this to nothing. */
@@ -107,7 +137,7 @@ void  mem_free(void *mem);
  * LWIP_MEM_ALIGN_SIZE(4) will both yield 4 for MEM_ALIGNMENT == 4).
  */
 #ifndef LWIP_MEM_ALIGN_SIZE
-#define LWIP_MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT-1))
+#define LWIP_MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1U) & ~(MEM_ALIGNMENT-1U))
 #endif
 
 /** Calculate safe memory size for an aligned buffer when using an unaligned
@@ -115,7 +145,7 @@ void  mem_free(void *mem);
  * start (e.g. if buffer is u8_t[] and actual data will be u32_t*)
  */
 #ifndef LWIP_MEM_ALIGN_BUFFER
-#define LWIP_MEM_ALIGN_BUFFER(size) (((size) + MEM_ALIGNMENT - 1))
+#define LWIP_MEM_ALIGN_BUFFER(size) (((size) + MEM_ALIGNMENT - 1U))
 #endif
 
 /** Align a memory pointer to the alignment defined by MEM_ALIGNMENT
@@ -129,4 +159,4 @@ void  mem_free(void *mem);
 }
 #endif
 
-#endif /* __LWIP_MEM_H__ */
+#endif /* LWIP_HDR_MEM_H */

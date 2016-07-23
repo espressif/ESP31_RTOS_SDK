@@ -1,8 +1,6 @@
 var searchData=
 [
-  ['sc_5fstatus',['sc_status',['../group___smartconfig___a_p_is.html#gafec33e52eaa14ed795ab28ce69c685e3',1,'smartconfig.h']]],
-  ['sc_5ftype',['sc_type',['../group___smartconfig___a_p_is.html#ga533261c0af94cdbb04fe90f452af9b9d',1,'smartconfig.h']]],
-  ['spiflashopresult',['SpiFlashOpResult',['../group___s_p_i___driver___a_p_is.html#ga7546515bb162fd2bb252ebe20fd92dbe',1,'spi_flash.h']]],
-  ['station_5fstatus',['STATION_STATUS',['../group___station___a_p_is.html#ga4c23fd73def991ebbce2a16bf7d474bc',1,'esp_sta.h']]],
-  ['system_5fevent',['SYSTEM_EVENT',['../group___wi_fi___common___a_p_is.html#gaeecbdf938220e31d3d52cd49c57400bd',1,'esp_wifi.h']]]
+  ['phy_5f2nd_5fchan',['phy_2nd_chan',['../group___phy___a_p_is.html#ga30cff0e7c9305a1b35a1501d1ff12bd0',1,'esp_phy.h']]],
+  ['phy_5fbw',['phy_bw',['../group___phy___a_p_is.html#ga61dc658779b25a414891511d83a09994',1,'esp_phy.h']]],
+  ['phy_5fmode',['phy_mode',['../group___phy___a_p_is.html#gac7b011149ade6368aa9194808621eb7e',1,'esp_phy.h']]]
 ];

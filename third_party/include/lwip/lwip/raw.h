@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_RAW_H__
-#define __LWIP_RAW_H__
+#ifndef LWIP_HDR_RAW_H
+#define LWIP_HDR_RAW_H
 
 #include "lwip/opt.h"
 
@@ -59,28 +59,7 @@ struct raw_pcb;
  * if it's not used any more.
  */
 typedef u8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
-    ip_addr_t *addr);
-
-#if LWIP_IPV6
-/** Function prototype for raw pcb IPv6 receive callback functions.
- * @param arg user supplied argument (raw_pcb.recv_arg)
- * @param pcb the raw_pcb which received data
- * @param p the packet buffer that was received
- * @param addr the remote IPv6 address from which the packet was received
- * @return 1 if the packet was 'eaten' (aka. deleted),
- *         0 if the packet lives on
- * If returning 1, the callback is responsible for freeing the pbuf
- * if it's not used any more.
- */
-typedef u8_t (*raw_recv_ip6_fn)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
-    ip6_addr_t *addr);
-#endif /* LWIP_IPV6 */
-
-#if LWIP_IPV6
-#define RAW_PCB_RECV_IP6  raw_recv_ip6_fn ip6;
-#else
-#define RAW_PCB_RECV_IP6
-#endif /* LWIP_IPV6 */
+    const ip_addr_t *addr);
 
 struct raw_pcb {
   /* Common members of all PCB types */
@@ -91,36 +70,35 @@ struct raw_pcb {
   u8_t protocol;
 
   /** receive callback function */
-  union {
-    raw_recv_fn ip4;
-    RAW_PCB_RECV_IP6
-  } recv;
+  raw_recv_fn recv;
   /* user-supplied argument for the recv callback */
   void *recv_arg;
+#if LWIP_IPV6
+  /* fields for handling checksum computations as per RFC3542. */
+  u16_t chksum_offset;
+  u8_t  chksum_reqd;
+#endif
 };
 
 /* The following functions is the application layer interface to the
    RAW code. */
 struct raw_pcb * raw_new        (u8_t proto);
+struct raw_pcb * raw_new_ip_type(u8_t type, u8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
-err_t            raw_bind       (struct raw_pcb *pcb, ip_addr_t *ipaddr);
-err_t            raw_connect    (struct raw_pcb *pcb, ip_addr_t *ipaddr);
+err_t            raw_bind       (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
+err_t            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
 
-void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
-err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr);
+err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr);
 err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 
-#if LWIP_IPV6
-struct raw_pcb * raw_new_ip6   (u8_t proto);
-#define          raw_bind_ip6(pcb, ip6addr) raw_bind(pcb, ip6_2_ip(ip6addr))
-#define          raw_connect_ip6(pcb, ip6addr) raw_connect(pcb, ip6_2_ip(ip6addr))
-#define          raw_recv_ip6(pcb, recv_ip6_fn, recv_arg) raw_recv(pcb, (raw_recv_fn)recv_ip6_fn, recv_arg)
-#define          raw_sendto_ip6(pcb, pbuf, ip6addr) raw_sendto(pcb, pbuf, ip6_2_ip(ip6addr))
-#endif /* LWIP_IPV6 */
+void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
 
 /* The following functions are the lower layer interface to RAW. */
 u8_t             raw_input      (struct pbuf *p, struct netif *inp);
-#define raw_init() /* Compatibility define, not init needed. */
+#define raw_init() /* Compatibility define, no init needed. */
+
+/* for compatibility with older implementation */
+#define raw_new_ip6(proto) raw_new_ip_type(IPADDR_TYPE_V6, proto)
 
 #ifdef __cplusplus
 }
@@ -128,4 +106,4 @@ u8_t             raw_input      (struct pbuf *p, struct netif *inp);
 
 #endif /* LWIP_RAW */
 
-#endif /* __LWIP_RAW_H__ */
+#endif /* LWIP_HDR_RAW_H */

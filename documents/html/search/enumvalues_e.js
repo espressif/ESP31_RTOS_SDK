@@ -1,9 +1,8 @@
 var searchData=
 [
-  ['wifi_5fmac',['WIFI_MAC',['../group___hardware___m_a_c___a_p_is.html#gga592f873b2a2cd40e54795a1b27e6bf9da5776603d585ec63ca41fa8c41f42d3f0',1,'esp_system.h']]],
-  ['wps_5fcb_5fst_5ffailed',['WPS_CB_ST_FAILED',['../group___w_p_s___a_p_is.html#ggad7729ea41405ddb427166e3c6ed9407aa82d6a587f16918a5e08fc7bd72e82256',1,'esp_wps.h']]],
-  ['wps_5fcb_5fst_5fscan_5ferr',['WPS_CB_ST_SCAN_ERR',['../group___w_p_s___a_p_is.html#ggad7729ea41405ddb427166e3c6ed9407aabebbd63e324d7efaaaa19643b6db3c5b',1,'esp_wps.h']]],
-  ['wps_5fcb_5fst_5fsuccess',['WPS_CB_ST_SUCCESS',['../group___w_p_s___a_p_is.html#ggad7729ea41405ddb427166e3c6ed9407aac8a6efa900487f4e54f8f09acd2fc4f8',1,'esp_wps.h']]],
-  ['wps_5fcb_5fst_5ftimeout',['WPS_CB_ST_TIMEOUT',['../group___w_p_s___a_p_is.html#ggad7729ea41405ddb427166e3c6ed9407aa06494c31ab495602b84bbf165ecdeffd',1,'esp_wps.h']]],
-  ['wps_5fcb_5fst_5fwep',['WPS_CB_ST_WEP',['../group___w_p_s___a_p_is.html#ggad7729ea41405ddb427166e3c6ed9407aabb3484dae0443776c8afe92d23d82621',1,'esp_wps.h']]]
+  ['upgrade_5fflag_5ferror',['UPGRADE_FLAG_ERROR',['../group__system__upgrade___a_p_is.html#gga1e8876da5916ec8c91b126453fad76f9a53fcf13a24c4263eee0fa113edd3f784',1,'upgrade.h']]],
+  ['upgrade_5fmem_5ferror',['UPGRADE_MEM_ERROR',['../group__system__upgrade___a_p_is.html#gga1e8876da5916ec8c91b126453fad76f9aebc78ad9bf2ac91c3f735c41fe0ab55b',1,'upgrade.h']]],
+  ['upgrade_5fok',['UPGRADE_OK',['../group__system__upgrade___a_p_is.html#gga1e8876da5916ec8c91b126453fad76f9ac93b2d84fc160c146b8c4e519694e557',1,'upgrade.h']]],
+  ['user_5fid_5fconflict_5ferror',['USER_ID_CONFLICT_ERROR',['../group__system__upgrade___a_p_is.html#gga1e8876da5916ec8c91b126453fad76f9a275ea4a41696e43433fb74140badf28c',1,'upgrade.h']]],
+  ['user_5fmac',['USER_MAC',['../group___hardware___m_a_c___a_p_is.html#gga4ea198f6b2879d432a068b4c3b27a387a165e495c4eab98124dc4f396ce3ec0f2',1,'esp_system.h']]]
 ];

@@ -78,7 +78,7 @@ CCFLAGS +=                  \
     -fno-inline-functions   \
     -nostdlib               \
     -mlongcalls             \
-    -mtext-section-literals #\
+    -mtext-section-literals \
     -ffunction-sections     \
     -fdata-sections
 #   -Wall
@@ -249,7 +249,7 @@ INCLUDES += -I $(SDK_PATH)/third_party/include
 INCLUDES += -I $(SDK_PATH)/third_party/include/cjson
 INCLUDES += -I $(SDK_PATH)/third_party/include/freertos
 INCLUDES += -I $(SDK_PATH)/third_party/include/http
-INCLUDES += -I $(SDK_PATH)/third_party/include/lwip -I $(SDK_PATH)/third_party/include/lwip/ipv4 -I $(SDK_PATH)/third_party/include/lwip/ipv6
+INCLUDES += -I $(SDK_PATH)/third_party/include/lwip -I $(SDK_PATH)/third_party/include/lwip/port -I $(SDK_PATH)/third_party/include/lwip/posix
 INCLUDES += -I $(SDK_PATH)/third_party/include/ssl
 
 ESP_TOOL ?= $(SDK_PATH)/tools/esptool.py
@@ -303,7 +303,6 @@ flash_boot:
 flash_app:
 	$(ESP_TOOL) -c ESP32 -p $(ESP_PORT) -b $(ESP_BAUD) write_flash	\
 	0x04000 $(BIN_PATH)/drom0.bin 0x40000 $(BIN_PATH)/irom0_flash.bin
-	minicom
 
 flash_blank:
 	$(ESP_TOOL) -c ESP32 -p $(ESP_PORT) -b $(ESP_BAUD) write_flash	\

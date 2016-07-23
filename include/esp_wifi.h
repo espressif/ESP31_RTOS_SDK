@@ -25,9 +25,12 @@
 #ifndef __ESP_WIFI_H__
 #define __ESP_WIFI_H__
 
+#include "lwip/ip4_addr.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 /** \defgroup WiFi_APIs WiFi Related APIs
   * @brief WiFi APIs
@@ -129,10 +132,17 @@ typedef enum {
     MAX_IF
 } WIFI_INTERFACE;
 
+/**
+  * @brief     Get the ESP32 WiFi interface (station or the soft-AP).
+  *
+  * @return    WIFI_INTERFACE
+  */
+WIFI_INTERFACE wifi_get_interface(void *dev);
+
 struct ip_info {
-    struct ip_addr ip;      /**< IP address */
-    struct ip_addr netmask; /**< netmask */
-    struct ip_addr gw;      /**< gateway */
+    ip4_addr_t ip;      /**< IP address */
+    ip4_addr_t netmask; /**< netmask */
+    ip4_addr_t gw;      /**< gateway */
 };
 
 /**
@@ -268,9 +278,9 @@ typedef struct {
 } Event_StaMode_AuthMode_Change_t;
 
 typedef struct {
-    struct ip_addr ip;      /**< IP address that ESP32 station got from connected AP */
-    struct ip_addr mask;    /**< netmask that ESP32 station got from connected AP */
-    struct ip_addr gw;      /**< gateway that ESP32 station got from connected AP */
+    ip4_addr_t ip;      /**< IP address that ESP32 station got from connected AP */
+    ip4_addr_t mask;    /**< netmask that ESP32 station got from connected AP */
+    ip4_addr_t gw;      /**< gateway that ESP32 station got from connected AP */
 } Event_StaMode_Got_IP_t;
 
 typedef struct {

@@ -25,6 +25,8 @@
 #ifndef __SMARTCONFIG_H__
 #define __SMARTCONFIG_H__
 
+#include "c_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

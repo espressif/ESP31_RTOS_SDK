@@ -25,6 +25,8 @@
 #ifndef __ESP_TIMER_H__
 #define __ESP_TIMER_H__
 
+#include "c_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

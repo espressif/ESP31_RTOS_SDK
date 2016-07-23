@@ -52,6 +52,7 @@ LINKFLAGS_eagle.app.v7 =    \
     -L$(SDK_PATH)/lib       \
     -nostdlib               \
     -T$(LD_FILE)            \
+    -Wl,--gc-sections       \
     -Wl,--no-check-sections \
     -u call_user_start      \
     -Wl,-static             \
@@ -63,9 +64,11 @@ LINKFLAGS_eagle.app.v7 =    \
     -lcrypto                \
     -lfreertos              \
     -llwip                  \
+    -llwip_dep	            \
     -lmain                  \
     -lnet80211              \
     -lphy                   \
+    -lphyrom                \
     -lpp                    \
     -lrtc                   \
     -lwpa                   \

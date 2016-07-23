@@ -357,6 +357,10 @@ uint8 system_get_current_bin_id(void);
   */
 bool system_reboot_to_userbin(uint8 bin_id);
 
+/**
+  * @}
+  */
+  
 /** \defgroup Hardware_MAC_APIs Hardware MAC APIs
   * @brief Hardware MAC address APIs
   *

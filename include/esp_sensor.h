@@ -25,6 +25,9 @@
 #ifndef __ESP_SENSOR_H__
 #define __ESP_SENSOR_H__
 
+#include "c_types.h"
+#include "esp32/eagle_soc.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

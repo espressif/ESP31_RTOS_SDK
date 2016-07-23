@@ -6,9 +6,9 @@
 
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -17,30 +17,30 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_OPT_H__
-#define __LWIP_OPT_H__
+#ifndef LWIP_HDR_OPT_H
+#define LWIP_HDR_OPT_H
 
 /*
  * Include user defined options first. Anything not defined in these files
- * will be set to standard values. Override anything you dont like!
+ * will be set to standard values. Override anything you don't like!
  */
 #include "lwipopts.h"
 #include "lwip/debug.h"
@@ -60,7 +60,7 @@
 #define SYS_LIGHTWEIGHT_PROT            0
 #endif
 
-/** 
+/**
  * NO_SYS==1: Provides VERY minimal functionality. Otherwise,
  * use lwIP facilities.
  */
@@ -90,6 +90,16 @@
  */
 #ifndef SMEMCPY
 #define SMEMCPY(dst,src,len)            memcpy(dst,src,len)
+#endif
+
+/**
+ * LWIP_MPU_COMPATIBLE: enables special memory management mechanism
+ * which makes lwip able to work on MPU (Memory Protection Unit) system
+ * by not passing stack-pointers to other threads
+ * (this decreases performance)
+ */
+#ifndef LWIP_MPU_COMPATIBLE
+#define LWIP_MPU_COMPATIBLE             0
 #endif
 
 /*
@@ -130,15 +140,6 @@
  */
 #ifndef MEM_SIZE
 #define MEM_SIZE                        1600
-#endif
-
-/**
- * MEMP_SEPARATE_POOLS: if defined to 1, each pool is placed in its own array.
- * This can be used to individually change the location of each pool.
- * Default is one big array for all pools
- */
-#ifndef MEMP_SEPARATE_POOLS
-#define MEMP_SEPARATE_POOLS             0
 #endif
 
 /**
@@ -183,8 +184,8 @@
 /**
  * MEMP_USE_CUSTOM_POOLS==1: whether to include a user file lwippools.h
  * that defines additional pools beyond the "standard" ones required
- * by lwIP. If you set this to 1, you must have lwippools.h in your 
- * inlude path somewhere. 
+ * by lwIP. If you set this to 1, you must have lwippools.h in your
+ * include path somewhere.
  */
 #ifndef MEMP_USE_CUSTOM_POOLS
 #define MEMP_USE_CUSTOM_POOLS           0
@@ -244,7 +245,7 @@
 #endif
 
 /**
- * MEMP_NUM_TCP_PCB: the number of simulatenously active TCP connections.
+ * MEMP_NUM_TCP_PCB: the number of simultaneously active TCP connections.
  * (requires the LWIP_TCP option)
  */
 #ifndef MEMP_NUM_TCP_PCB
@@ -287,7 +288,7 @@
 #endif
 
 /**
- * MEMP_NUM_ARP_QUEUE: the number of simulateously queued outgoing
+ * MEMP_NUM_ARP_QUEUE: the number of simultaneously queued outgoing
  * packets (pbufs) that are waiting for an ARP request (to resolve
  * their destination address) to finish.
  * (requires the ARP_QUEUEING option)
@@ -298,7 +299,7 @@
 
 /**
  * MEMP_NUM_IGMP_GROUP: The number of multicast groups whose network interfaces
- * can be members et the same time (one per netif - allsystems group -, plus one
+ * can be members at the same time (one per netif - allsystems group -, plus one
  * per netif membership).
  * (requires the LWIP_IGMP option)
  */
@@ -307,13 +308,12 @@
 #endif
 
 /**
- * MEMP_NUM_SYS_TIMEOUT: the number of simulateously active timeouts.
- * (requires NO_SYS==0)
+ * MEMP_NUM_SYS_TIMEOUT: the number of simultaneously active timeouts.
  * The default number of timeouts is calculated here for all enabled modules.
  * The formula expects settings to be either '0' or '1'.
  */
 #ifndef MEMP_NUM_SYS_TIMEOUT
-#define MEMP_NUM_SYS_TIMEOUT            (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + PPP_SUPPORT + (LWIP_IPV6 ? (1 + LWIP_IPV6_REASS + LWIP_IPV6_MLD) : 0))
+#define MEMP_NUM_SYS_TIMEOUT            (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + (PPP_SUPPORT*6*MEMP_NUM_PPP_PCB) + (LWIP_IPV6 ? (1 + LWIP_IPV6_REASS + LWIP_IPV6_MLD) : 0))
 #endif
 
 /**
@@ -334,7 +334,7 @@
 
 /**
  * MEMP_NUM_TCPIP_MSG_API: the number of struct tcpip_msg, which are used
- * for callback/timeout API communication. 
+ * for callback/timeout API communication.
  * (only needed if you use tcpip.c)
  */
 #ifndef MEMP_NUM_TCPIP_MSG_API
@@ -343,44 +343,11 @@
 
 /**
  * MEMP_NUM_TCPIP_MSG_INPKT: the number of struct tcpip_msg, which are used
- * for incoming packets. 
+ * for incoming packets.
  * (only needed if you use tcpip.c)
  */
 #ifndef MEMP_NUM_TCPIP_MSG_INPKT
 #define MEMP_NUM_TCPIP_MSG_INPKT        8
-#endif
-
-/**
- * MEMP_NUM_SNMP_NODE: the number of leafs in the SNMP tree.
- */
-#ifndef MEMP_NUM_SNMP_NODE
-#define MEMP_NUM_SNMP_NODE              50
-#endif
-
-/**
- * MEMP_NUM_SNMP_ROOTNODE: the number of branches in the SNMP tree.
- * Every branch has one leaf (MEMP_NUM_SNMP_NODE) at least!
- */
-#ifndef MEMP_NUM_SNMP_ROOTNODE
-#define MEMP_NUM_SNMP_ROOTNODE          30
-#endif
-
-/**
- * MEMP_NUM_SNMP_VARBIND: the number of concurrent requests (does not have to
- * be changed normally) - 2 of these are used per request (1 for input,
- * 1 for output)
- */
-#ifndef MEMP_NUM_SNMP_VARBIND
-#define MEMP_NUM_SNMP_VARBIND           2
-#endif
-
-/**
- * MEMP_NUM_SNMP_VALUE: the number of OID or values concurrently used
- * (does not have to be changed normally) - 3 of these are used per request
- * (1 for the value read and 2 for OIDs - input and output)
- */
-#ifndef MEMP_NUM_SNMP_VALUE
-#define MEMP_NUM_SNMP_VALUE             3
 #endif
 
 /**
@@ -400,6 +367,22 @@
 #endif
 
 /**
+ * MEMP_NUM_PPP_PCB: the number of simultaneously active PPP
+ * connections (requires the PPP_SUPPORT option)
+ */
+#ifndef MEMP_NUM_PPP_PCB
+#define MEMP_NUM_PPP_PCB       1
+#endif
+
+/**
+ * MEMP_NUM_PPPOS_INTERFACES: the number of concurrently active PPPoS
+ * interfaces (only used with PPPOS_SUPPORT==1)
+ */
+#ifndef MEMP_NUM_PPPOS_INTERFACES
+#define MEMP_NUM_PPPOS_INTERFACES       MEMP_NUM_PPP_PCB
+#endif
+
+/**
  * MEMP_NUM_PPPOE_INTERFACES: the number of concurrently active PPPoE
  * interfaces (only used with PPPOE_SUPPORT==1)
  */
@@ -408,10 +391,45 @@
 #endif
 
 /**
- * PBUF_POOL_SIZE: the number of buffers in the pbuf pool. 
+ * MEMP_NUM_PPPOL2TP_INTERFACES: the number of concurrently active PPPoL2TP
+ * interfaces (only used with PPPOL2TP_SUPPORT==1)
+ */
+#ifndef MEMP_NUM_PPPOL2TP_INTERFACES
+#define MEMP_NUM_PPPOL2TP_INTERFACES       1
+#endif
+
+/**
+ * PBUF_POOL_SIZE: the number of buffers in the pbuf pool.
  */
 #ifndef PBUF_POOL_SIZE
 #define PBUF_POOL_SIZE                  16
+#endif
+
+/** MEMP_NUM_API_MSG: the number of concurrently active calls to various
+ * socket, netconn, and tcpip functions
+ */
+#ifndef MEMP_NUM_API_MSG
+#define MEMP_NUM_API_MSG                MEMP_NUM_TCPIP_MSG_API
+#endif
+
+/** MEMP_NUM_DNS_API_MSG: the number of concurrently active calls to netconn_gethostbyname
+ */
+#ifndef MEMP_NUM_DNS_API_MSG
+#define MEMP_NUM_DNS_API_MSG            MEMP_NUM_TCPIP_MSG_API
+#endif
+
+/** MEMP_NUM_SOCKET_SETGETSOCKOPT_DATA: the number of concurrently active calls
+ * to getsockopt/setsockopt
+ */
+#ifndef MEMP_NUM_SOCKET_SETGETSOCKOPT_DATA
+#define MEMP_NUM_SOCKET_SETGETSOCKOPT_DATA MEMP_NUM_TCPIP_MSG_API
+#endif
+
+/** MEMP_NUM_NETIFAPI_MSG: the number of concurrently active calls to the
+ * netifapi functions
+ */
+#ifndef MEMP_NUM_NETIFAPI_MSG
+#define MEMP_NUM_NETIFAPI_MSG           MEMP_NUM_TCPIP_MSG_API
 #endif
 
 /*
@@ -433,6 +451,14 @@
 #define ARP_TABLE_SIZE                  10
 #endif
 
+/** the time an ARP entry stays valid after its last update,
+ *  for ARP_TMR_INTERVAL = 1000, this is
+ *  (60 * 5) seconds = 5 minutes.
+ */
+#ifndef ARP_MAXAGE
+#define ARP_MAXAGE                      300
+#endif
+
 /**
  * ARP_QUEUEING==1: Multiple outgoing packets are queued during hardware address
  * resolution. By default, only the most recent packet is queued per IP address.
@@ -442,6 +468,14 @@
  */
 #ifndef ARP_QUEUEING
 #define ARP_QUEUEING                    0
+#endif
+
+/** The maximum number of packets which may be queued for each
+ *  unresolved address by other network layers. Defaults to 3, 0 means disabled.
+ *  Old packets are dropped, new packets are queued.
+ */
+#ifndef ARP_QUEUE_LEN
+#define ARP_QUEUE_LEN                   3
 #endif
 
 /**
@@ -459,7 +493,9 @@
 #endif
 
 /**
- * ETHARP_SUPPORT_VLAN==1: support receiving ethernet packets with VLAN header.
+ * ETHARP_SUPPORT_VLAN==1: support receiving and sending ethernet packets with
+ * VLAN header. See the description of LWIP_HOOK_VLAN_CHECK and
+ * LWIP_HOOK_VLAN_SET hooks to check/set VLAN headers.
  * Additionally, you can define ETHARP_VLAN_CHECK to an u16_t VLAN ID to check.
  * If ETHARP_VLAN_CHECK is defined, only VLAN-traffic for this VLAN is accepted.
  * If ETHARP_VLAN_CHECK is not defined, all traffic is accepted.
@@ -493,6 +529,13 @@
 #define ETHARP_SUPPORT_STATIC_ENTRIES   0
 #endif
 
+/** ETHARP_TABLE_MATCH_NETIF==1: Match netif for ARP table entries.
+ * If disabled, duplicate IP address on multiple netifs are not supported
+ * (but this should only occur for AutoIP).
+ */
+#ifndef ETHARP_TABLE_MATCH_NETIF
+#define ETHARP_TABLE_MATCH_NETIF        0
+#endif
 
 /*
    --------------------------------
@@ -500,21 +543,19 @@
    --------------------------------
 */
 /**
+ * LWIP_IPV4==1: Enable IPv4
+ */
+#ifndef LWIP_IPV4
+#define LWIP_IPV4                       1
+#endif
+
+/**
  * IP_FORWARD==1: Enables the ability to forward IP packets across network
  * interfaces. If you are going to run lwIP on a device with only one network
  * interface, define this to 0.
  */
 #ifndef IP_FORWARD
 #define IP_FORWARD                      0
-#endif
-
-/**
- * IP_OPTIONS_ALLOWED: Defines the behavior for IP options.
- *      IP_OPTIONS_ALLOWED==0: All packets with IP options are dropped.
- *      IP_OPTIONS_ALLOWED==1: IP options are allowed (but not parsed).
- */
-#ifndef IP_OPTIONS_ALLOWED
-#define IP_OPTIONS_ALLOWED              1
 #endif
 
 /**
@@ -533,6 +574,25 @@
  */
 #ifndef IP_FRAG
 #define IP_FRAG                         1
+#endif
+
+#if !LWIP_IPV4
+/* disable IPv4 extensions when IPv4 is disabled */
+#undef IP_FORWARD
+#define IP_FORWARD                      0
+#undef IP_REASSEMBLY
+#define IP_REASSEMBLY                   0
+#undef IP_FRAG
+#define IP_FRAG                         0
+#endif /* !LWIP_IPV4 */
+
+/**
+ * IP_OPTIONS_ALLOWED: Defines the behavior for IP options.
+ *      IP_OPTIONS_ALLOWED==0: All packets with IP options are dropped.
+ *      IP_OPTIONS_ALLOWED==1: IP options are allowed (but not parsed).
+ */
+#ifndef IP_OPTIONS_ALLOWED
+#define IP_OPTIONS_ALLOWED              1
 #endif
 
 /**
@@ -660,7 +720,7 @@
  * LWIP_RAW==1: Enable application layer to hook into the IP layer itself.
  */
 #ifndef LWIP_RAW
-#define LWIP_RAW                        1
+#define LWIP_RAW                        0
 #endif
 
 /**
@@ -681,12 +741,50 @@
 #ifndef LWIP_DHCP
 #define LWIP_DHCP                       0
 #endif
+#if !LWIP_IPV4
+/* disable DHCP when IPv4 is disabled */
+#undef LWIP_DHCP
+#define LWIP_DHCP                       0
+#endif /* !LWIP_IPV4 */
 
 /**
  * DHCP_DOES_ARP_CHECK==1: Do an ARP check on the offered address.
  */
 #ifndef DHCP_DOES_ARP_CHECK
 #define DHCP_DOES_ARP_CHECK             ((LWIP_DHCP) && (LWIP_ARP))
+#endif
+
+/**
+ * LWIP_DHCP_CHECK_LINK_UP==1: dhcp_start() only really starts if the netif has
+ * NETIF_FLAG_LINK_UP set in its flags. As this is only an optimization and
+ * netif drivers might not set this flag, the default is off. If enabled,
+ * netif_set_link_up() must be called to continue dhcp starting.
+ */
+#ifndef LWIP_DHCP_CHECK_LINK_UP
+#define LWIP_DHCP_CHECK_LINK_UP         0
+#endif
+
+/**
+ * LWIP_DHCP_BOOTP_FILE==1: Store offered_si_addr and boot_file_name.
+ */
+#ifndef LWIP_DHCP_BOOTP_FILE
+#define LWIP_DHCP_BOOTP_FILE            0
+#endif
+
+/**
+ * LWIP_DHCP_GETS_NTP==1: Request NTP servers with discover/select. For each
+ * response packet, an callback is called, which has to be provided by the port:
+ * void dhcp_set_ntp_servers(u8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+*/
+#ifndef LWIP_DHCP_GET_NTP_SRV
+#define LWIP_DHCP_GET_NTP_SRV           0
+#endif
+
+/**
+ * The maximum of NTP servers requested
+ */
+#ifndef LWIP_DHCP_MAX_NTP_SERVERS
+#define LWIP_DHCP_MAX_NTP_SERVERS       1
 #endif
 
 /*
@@ -700,6 +798,11 @@
 #ifndef LWIP_AUTOIP
 #define LWIP_AUTOIP                     0
 #endif
+#if !LWIP_IPV4
+/* disable AUTOIP when IPv4 is disabled */
+#undef LWIP_AUTOIP
+#define LWIP_AUTOIP                     0
+#endif /* !LWIP_IPV4 */
 
 /**
  * LWIP_DHCP_AUTOIP_COOP==1: Allow DHCP and AUTOIP to be both enabled on
@@ -722,87 +825,40 @@
 
 /*
    ----------------------------------
-   ---------- SNMP options ----------
+   ----- SNMP MIB2 support      -----
    ----------------------------------
 */
 /**
- * LWIP_SNMP==1: Turn on SNMP module. UDP must be available for SNMP
- * transport.
+ * LWIP_MIB2_CALLBACKS==1: Turn on SNMP MIB2 callbacks.
+ * Turn this on to get callbacks needed to implement MIB2.
+ * Usually MIB2_STATS should be enabled, too.
  */
-#ifndef LWIP_SNMP
-#define LWIP_SNMP                       0
-#endif
-
-/**
- * SNMP_CONCURRENT_REQUESTS: Number of concurrent requests the module will
- * allow. At least one request buffer is required.
- * Does not have to be changed unless external MIBs answer request asynchronously
- */
-#ifndef SNMP_CONCURRENT_REQUESTS
-#define SNMP_CONCURRENT_REQUESTS        1
-#endif
-
-/**
- * SNMP_TRAP_DESTINATIONS: Number of trap destinations. At least one trap
- * destination is required
- */
-#ifndef SNMP_TRAP_DESTINATIONS
-#define SNMP_TRAP_DESTINATIONS          1
-#endif
-
-/**
- * SNMP_PRIVATE_MIB: 
- * When using a private MIB, you have to create a file 'private_mib.h' that contains
- * a 'struct mib_array_node mib_private' which contains your MIB.
- */
-#ifndef SNMP_PRIVATE_MIB
-#define SNMP_PRIVATE_MIB                0
-#endif
-
-/**
- * Only allow SNMP write actions that are 'safe' (e.g. disabeling netifs is not
- * a safe action and disabled when SNMP_SAFE_REQUESTS = 1).
- * Unsafe requests are disabled by default!
- */
-#ifndef SNMP_SAFE_REQUESTS
-#define SNMP_SAFE_REQUESTS              1
-#endif
-
-/**
- * The maximum length of strings used. This affects the size of
- * MEMP_SNMP_VALUE elements.
- */
-#ifndef SNMP_MAX_OCTET_STRING_LEN
-#define SNMP_MAX_OCTET_STRING_LEN       127
-#endif
-
-/**
- * The maximum depth of the SNMP tree.
- * With private MIBs enabled, this depends on your MIB!
- * This affects the size of MEMP_SNMP_VALUE elements.
- */
-#ifndef SNMP_MAX_TREE_DEPTH
-#define SNMP_MAX_TREE_DEPTH             15
-#endif
-
-/**
- * The size of the MEMP_SNMP_VALUE elements, normally calculated from
- * SNMP_MAX_OCTET_STRING_LEN and SNMP_MAX_TREE_DEPTH.
- */
-#ifndef SNMP_MAX_VALUE_SIZE
-#define SNMP_MAX_VALUE_SIZE             LWIP_MAX((SNMP_MAX_OCTET_STRING_LEN)+1, sizeof(s32_t)*(SNMP_MAX_TREE_DEPTH))
+#ifndef LWIP_MIB2_CALLBACKS
+#define LWIP_MIB2_CALLBACKS             0
 #endif
 
 /*
    ----------------------------------
-   ---------- IGMP options ----------
+   ----- Multicast/IGMP options -----
    ----------------------------------
 */
 /**
- * LWIP_IGMP==1: Turn on IGMP module. 
+ * LWIP_IGMP==1: Turn on IGMP module.
  */
 #ifndef LWIP_IGMP
+#define LWIP_IGMP                       1
+#endif
+#if !LWIP_IPV4
+#undef LWIP_IGMP
 #define LWIP_IGMP                       0
+#endif
+
+/**
+ * LWIP_MULTICAST_TX_OPTIONS==1: Enable multicast TX support like the socket options
+ * IP_MULTICAST_TTL/IP_MULTICAST_IF/IP_MULTICAST_LOOP
+ */
+#ifndef LWIP_MULTICAST_TX_OPTIONS
+#define LWIP_MULTICAST_TX_OPTIONS       LWIP_IGMP
 #endif
 
 /*
@@ -828,7 +884,10 @@
 #define DNS_MAX_NAME_LENGTH             256
 #endif
 
-/** The maximum of DNS servers */
+/** The maximum of DNS servers
+ * The first server can be initialized automatically by defining
+ * DNS_SERVER_ADDRESS(ipaddr), where 'ipaddr' is an 'ip_addr_t*'
+ */
 #ifndef DNS_MAX_SERVERS
 #define DNS_MAX_SERVERS                 2
 #endif
@@ -838,10 +897,17 @@
 #define DNS_DOES_NAME_CHECK             1
 #endif
 
-/** DNS message max. size. Default value is RFC compliant. */
-#ifndef DNS_MSG_SIZE
-#define DNS_MSG_SIZE                    512
+/** LWIP_DNS_SECURE: controls the security level of the DNS implementation
+ * Use all DNS security features by default.
+ * This is overridable but should only be needed by very small targets
+ * or when using against non standard DNS servers. */
+#ifndef LWIP_DNS_SECURE
+#define LWIP_DNS_SECURE (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT)
 #endif
+/* A list of DNS security features follows */
+#define LWIP_DNS_SECURE_RAND_XID                1
+#define LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING 2
+#define LWIP_DNS_SECURE_RAND_SRC_PORT           4
 
 /** DNS_LOCAL_HOSTLIST: Implements a local host-to-address list. If enabled,
  *  you have to define
@@ -916,12 +982,12 @@
 #endif
 
 /**
- * TCP_WND: The size of a TCP window.  This must be at least 
+ * TCP_WND: The size of a TCP window.  This must be at least
  * (2 * TCP_MSS) for things to work well
  */
 #ifndef TCP_WND
 #define TCP_WND                         (4 * TCP_MSS)
-#endif 
+#endif
 
 /**
  * TCP_MAXRTX: Maximum number of retransmissions of data segments.
@@ -1055,6 +1121,9 @@
 
 /**
  * LWIP_TCP_TIMESTAMPS==1: support the TCP timestamp option.
+ * The timestamp option is currently only used to help remote hosts, it is not
+ * really used locally. Therefore, it is only enabled when a TS option is
+ * received in the initial SYN packet from a remote host.
  */
 #ifndef LWIP_TCP_TIMESTAMPS
 #define LWIP_TCP_TIMESTAMPS             0
@@ -1065,7 +1134,7 @@
  * explicit window update
  */
 #ifndef TCP_WND_UPDATE_THRESHOLD
-#define TCP_WND_UPDATE_THRESHOLD   (TCP_WND / 4)
+#define TCP_WND_UPDATE_THRESHOLD   LWIP_MIN((TCP_WND / 4), (TCP_MSS * 4))
 #endif
 
 /**
@@ -1080,6 +1149,19 @@
 #define LWIP_CALLBACK_API               1
 #endif
 
+/**
+ * LWIP_WND_SCALE and TCP_RCV_SCALE:
+ * Set LWIP_WND_SCALE to 1 to enable window scaling.
+ * Set TCP_RCV_SCALE to the desired scaling factor (shift count in the
+ * range of [0..14]).
+ * When LWIP_WND_SCALE is enabled but TCP_RCV_SCALE is 0, we can use a large
+ * send window while having a small receive window only.
+ */
+#ifndef LWIP_WND_SCALE
+#define LWIP_WND_SCALE                  0
+#define TCP_RCV_SCALE                   0
+#endif
+
 
 /*
    ----------------------------------
@@ -1092,16 +1174,28 @@
  * Ethernet.
  */
 #ifndef PBUF_LINK_HLEN
+#ifdef LWIP_HOOK_VLAN_SET
+#define PBUF_LINK_HLEN                  (18 + ETH_PAD_SIZE)
+#else /* LWIP_HOOK_VLAN_SET */
 #define PBUF_LINK_HLEN                  (14 + ETH_PAD_SIZE)
+#endif /* LWIP_HOOK_VLAN_SET */
+#endif
+
+/**
+ * PBUF_LINK_ENCAPSULATION_HLEN: the number of bytes that should be allocated
+ * for an additional encapsulation header before ethernet headers (e.g. 802.11)
+ */
+#ifndef PBUF_LINK_ENCAPSULATION_HLEN
+#define PBUF_LINK_ENCAPSULATION_HLEN    0
 #endif
 
 /**
  * PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. The default is
- * designed to accomodate single full size TCP frame in one pbuf, including
+ * designed to accommodate single full size TCP frame in one pbuf, including
  * TCP_MSS, IP header, and link header.
  */
 #ifndef PBUF_POOL_BUFSIZE
-#define PBUF_POOL_BUFSIZE               LWIP_MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_HLEN)
+#define PBUF_POOL_BUFSIZE               LWIP_MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_ENCAPSULATION_HLEN+PBUF_LINK_HLEN)
 #endif
 
 /*
@@ -1126,7 +1220,7 @@
 
 /**
  * LWIP_NETIF_STATUS_CALLBACK==1: Support a callback function whenever an interface
- * changes its up/down status (i.e., due to DHCP IP acquistion)
+ * changes its up/down status (i.e., due to DHCP IP acquisition)
  */
 #ifndef LWIP_NETIF_STATUS_CALLBACK
 #define LWIP_NETIF_STATUS_CALLBACK      0
@@ -1211,10 +1305,19 @@
    ------------------------------------
 */
 /**
- * LWIP_HAVE_LOOPIF==1: Support loop interface (127.0.0.1) and loopif.c
+ * LWIP_HAVE_LOOPIF==1: Support loop interface (127.0.0.1).
+ * This is only needed when no real netifs are available. If at least one other
+ * netif is available, loopback traffic uses this netif.
  */
 #ifndef LWIP_HAVE_LOOPIF
-#define LWIP_HAVE_LOOPIF                0
+#define LWIP_HAVE_LOOPIF                LWIP_NETIF_LOOPBACK
+#endif
+
+/**
+ * LWIP_LOOPIF_MULTICAST==1: Support multicast/IGMP on loop interface (127.0.0.1).
+ */
+#ifndef LWIP_LOOPIF_MULTICAST
+#define LWIP_LOOPIF_MULTICAST               0
 #endif
 
 /*
@@ -1291,31 +1394,6 @@
  */
 #ifndef SLIPIF_THREAD_PRIO
 #define SLIPIF_THREAD_PRIO              1
-#endif
-
-/**
- * PPP_THREAD_NAME: The name assigned to the pppInputThread.
- */
-#ifndef PPP_THREAD_NAME
-#define PPP_THREAD_NAME                "pppInputThread"
-#endif
-
-/**
- * PPP_THREAD_STACKSIZE: The stack size used by the pppInputThread.
- * The stack size value itself is platform-dependent, but is passed to
- * sys_thread_new() when the thread is created.
- */
-#ifndef PPP_THREAD_STACKSIZE
-#define PPP_THREAD_STACKSIZE            0
-#endif
-
-/**
- * PPP_THREAD_PRIO: The priority assigned to the pppInputThread.
- * The priority value itself is platform-dependent, but is passed to
- * sys_thread_new() when the thread is created.
- */
-#ifndef PPP_THREAD_PRIO
-#define PPP_THREAD_PRIO                 1
 #endif
 
 /**
@@ -1407,11 +1485,37 @@
 #define LWIP_NETCONN                    1
 #endif
 
-/** LWIP_TCPIP_TIMEOUT==1: Enable tcpip_timeout/tcpip_untimeout tod create
+/** LWIP_TCPIP_TIMEOUT==1: Enable tcpip_timeout/tcpip_untimeout to create
  * timers running in tcpip_thread from another thread.
  */
 #ifndef LWIP_TCPIP_TIMEOUT
-#define LWIP_TCPIP_TIMEOUT              1
+#define LWIP_TCPIP_TIMEOUT              0
+#endif
+
+/** LWIP_NETCONN_SEM_PER_THREAD==1: Use one (thread-local) semaphore per
+ * thread calling socket/netconn functions instead of allocating one
+ * semaphore per netconn (and per select etc.)
+ * ATTENTION: a thread-local semaphore for API calls is needed:
+ * - LWIP_NETCONN_THREAD_SEM_GET() returning a sys_sem_t*
+ * - LWIP_NETCONN_THREAD_SEM_ALLOC() creating the semaphore
+ * - LWIP_NETCONN_THREAD_SEM_FREE() freeing the semaphore
+ * The latter 2 can be invoked up by calling netconn_thread_init()/netconn_thread_cleanup().
+ * Ports may call these for threads created with sys_thread_new().
+ */
+#ifndef LWIP_NETCONN_SEM_PER_THREAD
+#define LWIP_NETCONN_SEM_PER_THREAD     0
+#endif
+
+/** LWIP_NETCONN_FULLDUPLEX==1: Enable code that allows reading from one thread,
+ * writing from a 2nd thread and closing from a 3rd thread at the same time.
+ * ATTENTION: This is currently really alpha! Some requirements:
+ * - LWIP_NETCONN_SEM_PER_THREAD==1 is required to use one socket/netconn from
+ *   multiple threads at once
+ * - sys_mbox_free() has to unblock receive tasks waiting on recvmbox/acceptmbox
+ *   and prevent a task pending on this during/after deletion
+ */
+#ifndef LWIP_NETCONN_FULLDUPLEX
+#define LWIP_NETCONN_FULLDUPLEX         0
 #endif
 
 /*
@@ -1426,8 +1530,17 @@
 #define LWIP_SOCKET                     1
 #endif
 
+/* LWIP_SOCKET_SET_ERRNO==1: Set errno when socket functions cannot complete
+ * successfully, as required by POSIX. Default is POSIX-compliant.
+ */
+#ifndef LWIP_SOCKET_SET_ERRNO
+#define LWIP_SOCKET_SET_ERRNO           1
+#endif
+
 /**
- * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names.
+ * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names through defines.
+ * LWIP_COMPAT_SOCKETS==2: Same as ==1 but correctly named functions are created.
+ * While this helps code completion, it might conflict with existing libraries.
  * (only used if you use sockets.c)
  */
 #ifndef LWIP_COMPAT_SOCKETS
@@ -1441,6 +1554,17 @@
  */
 #ifndef LWIP_POSIX_SOCKETS_IO_NAMES
 #define LWIP_POSIX_SOCKETS_IO_NAMES     1
+#endif
+
+/**
+ * LWIP_SOCKET_OFFSET==n: Increases the file descriptor number created by LwIP with n.
+ * This can be useful when there are multiple APIs which create file descriptors.
+ * When they all start with a different offset and you won't make them overlap you can
+ * re implement read/write/close/ioctl/fnctl to send the requested action to the right
+ * library (sharing select will need more work though).
+ */
+#ifndef LWIP_SOCKET_OFFSET
+#define LWIP_SOCKET_OFFSET              0
 #endif
 
 /**
@@ -1469,6 +1593,14 @@
 #endif
 
 /**
+ * LWIP_SO_SNDRCVTIMEO_NONSTANDARD==1: SO_RCVTIMEO/SO_SNDTIMEO take an int
+ * (milliseconds, much like winsock does) instead of a struct timeval (default).
+ */
+#ifndef LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+#define LWIP_SO_SNDRCVTIMEO_NONSTANDARD 0
+#endif
+
+/**
  * LWIP_SO_RCVBUF==1: Enable SO_RCVBUF processing.
  */
 #ifndef LWIP_SO_RCVBUF
@@ -1476,10 +1608,24 @@
 #endif
 
 /**
+ * LWIP_SO_LINGER==1: Enable SO_LINGER processing.
+ */
+#ifndef LWIP_SO_LINGER
+#define LWIP_SO_LINGER                  0
+#endif
+
+/**
  * If LWIP_SO_RCVBUF is used, this is the default value for recv_bufsize.
  */
 #ifndef RECV_BUFSIZE_DEFAULT
 #define RECV_BUFSIZE_DEFAULT            INT_MAX
+#endif
+
+/**
+ * By default, TCP socket/netconn close waits 20 seconds max to send the FIN
+ */
+#ifndef LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT
+#define LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT 20000
 #endif
 
 /**
@@ -1646,6 +1792,13 @@
 #define ND6_STATS                       (LWIP_IPV6)
 #endif
 
+/**
+ * MIB2_STATS==1: Stats for SNMP MIB2.
+ */
+#ifndef MIB2_STATS
+#define MIB2_STATS                      0
+#endif
+
 #else
 
 #define LINK_STATS                      0
@@ -1665,6 +1818,7 @@
 #define IP6_FRAG_STATS                  0
 #define MLD6_STATS                      0
 #define ND6_STATS                       0
+#define MIB2_STATS                      0
 
 #endif /* LWIP_STATS */
 
@@ -1673,6 +1827,7 @@
    ---------- PPP options ----------
    ---------------------------------
 */
+
 /**
  * PPP_SUPPORT==1: Enable PPP.
  */
@@ -1688,19 +1843,99 @@
 #endif
 
 /**
+ * PPPOL2TP_SUPPORT==1: Enable PPP Over L2TP
+ */
+#ifndef PPPOL2TP_SUPPORT
+#define PPPOL2TP_SUPPORT                0
+#endif
+
+/**
+ * PPPOL2TP_AUTH_SUPPORT==1: Enable PPP Over L2TP Auth (enable MD5 support)
+ */
+#ifndef PPPOL2TP_AUTH_SUPPORT
+#define PPPOL2TP_AUTH_SUPPORT           PPPOL2TP_SUPPORT
+#endif
+
+/**
  * PPPOS_SUPPORT==1: Enable PPP Over Serial
  */
 #ifndef PPPOS_SUPPORT
 #define PPPOS_SUPPORT                   PPP_SUPPORT
 #endif
 
+/**
+ * LWIP_PPP_API==1: Enable PPP API (in pppapi.c)
+ */
+#ifndef LWIP_PPP_API
+#define LWIP_PPP_API                    (PPP_SUPPORT && (NO_SYS == 0))
+#endif
+
 #if PPP_SUPPORT
 
 /**
- * NUM_PPP: Max PPP sessions.
+ * PPP_INPROC_IRQ_SAFE==1 call pppos_input() using tcpip_callback().
+ *
+ * Please read the "PPPoS input path" chapter in the PPP documentation about this option.
  */
-#ifndef NUM_PPP
-#define NUM_PPP                         1
+#ifndef PPP_INPROC_IRQ_SAFE
+#define PPP_INPROC_IRQ_SAFE             0
+#endif
+
+/**
+ * PRINTPKT_SUPPORT==1: Enable PPP print packet support
+ *
+ * Mandatory for debugging, it displays exchanged packet content in debug trace.
+ */
+#ifndef PRINTPKT_SUPPORT
+#define PRINTPKT_SUPPORT                0
+#endif
+
+/**
+ * PPP_IPV4_SUPPORT==1: Enable PPP IPv4 support
+ */
+#ifndef PPP_IPV4_SUPPORT
+#define PPP_IPV4_SUPPORT                (LWIP_IPV4)
+#endif
+
+/**
+ * PPP_IPV6_SUPPORT==1: Enable PPP IPv6 support
+ */
+#ifndef PPP_IPV6_SUPPORT
+#define PPP_IPV6_SUPPORT                (LWIP_IPV6)
+#endif
+
+/**
+ * PPP_NOTIFY_PHASE==1: Support PPP notify phase support
+ *
+ * PPP notify phase support allows you to set a callback which is
+ * called on change of the internal PPP state machine.
+ *
+ * This can be used for example to set a LED pattern depending on the
+ * current phase of the PPP session.
+ */
+#ifndef PPP_NOTIFY_PHASE
+#define PPP_NOTIFY_PHASE                0
+#endif
+
+/**
+ * pbuf_type PPP is using for LCP, PAP, CHAP, EAP, CCP, IPCP and IP6CP packets.
+ *
+ * Memory allocated must be single buffered for PPP to works, it requires pbuf
+ * that are not going to be chained when allocated. This requires setting
+ * PBUF_POOL_BUFSIZE to at least 512 bytes, which is quite huge for small systems.
+ *
+ * Setting PPP_USE_PBUF_RAM to 1 makes PPP use memory from heap where continuous
+ * buffers are required, allowing you to use a smaller PBUF_POOL_BUFSIZE.
+ */
+#ifndef PPP_USE_PBUF_RAM
+#define PPP_USE_PBUF_RAM                0
+#endif
+
+/**
+ * PPP_FCS_TABLE: Keep a 256*2 byte table to speed up FCS calculation for PPPoS
+ */
+#ifndef PPP_FCS_TABLE
+#define PPP_FCS_TABLE                   1
 #endif
 
 /**
@@ -1718,11 +1953,48 @@
 #endif
 
 /**
- * MSCHAP_SUPPORT==1: Support MSCHAP. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ * MSCHAP_SUPPORT==1: Support MSCHAP.
  */
 #ifndef MSCHAP_SUPPORT
 #define MSCHAP_SUPPORT                  0
 #endif
+#if MSCHAP_SUPPORT
+/* MSCHAP requires CHAP support */
+#undef CHAP_SUPPORT
+#define CHAP_SUPPORT                    1
+#endif /* MSCHAP_SUPPORT */
+
+/**
+ * EAP_SUPPORT==1: Support EAP.
+ */
+#ifndef EAP_SUPPORT
+#define EAP_SUPPORT                     0
+#endif
+
+/**
+ * CCP_SUPPORT==1: Support CCP.
+ */
+#ifndef CCP_SUPPORT
+#define CCP_SUPPORT                     0
+#endif
+
+/**
+ * MPPE_SUPPORT==1: Support MPPE.
+ */
+#ifndef MPPE_SUPPORT
+#define MPPE_SUPPORT                    0
+#endif
+#if MPPE_SUPPORT
+/* MPPE requires CCP support */
+#undef CCP_SUPPORT
+#define CCP_SUPPORT                     1
+/* MPPE requires MSCHAP support */
+#undef MSCHAP_SUPPORT
+#define MSCHAP_SUPPORT                  1
+/* MSCHAP requires CHAP support */
+#undef CHAP_SUPPORT
+#define CHAP_SUPPORT                    1
+#endif /* MPPE_SUPPORT */
 
 /**
  * CBCP_SUPPORT==1: Support CBCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
@@ -1732,102 +2004,333 @@
 #endif
 
 /**
- * CCP_SUPPORT==1: Support CCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ * ECP_SUPPORT==1: Support ECP. CURRENTLY NOT SUPPORTED! DO NOT SET!
  */
-#ifndef CCP_SUPPORT
-#define CCP_SUPPORT                     0
+#ifndef ECP_SUPPORT
+#define ECP_SUPPORT                     0
 #endif
+
+/**
+ * DEMAND_SUPPORT==1: Support dial on demand. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ */
+#ifndef DEMAND_SUPPORT
+#define DEMAND_SUPPORT                  0
+#endif
+
+/**
+ * LQR_SUPPORT==1: Support Link Quality Report. Do nothing except exchanging some LCP packets.
+ */
+#ifndef LQR_SUPPORT
+#define LQR_SUPPORT                     0
+#endif
+
+/**
+ * PPP_SERVER==1: Enable PPP server support (waiting for incoming PPP session).
+ *
+ * Currently only supported for PPPoS.
+ */
+#ifndef PPP_SERVER
+#define PPP_SERVER                      0
+#endif
+
+#if PPP_SERVER
+/*
+ * PPP_OUR_NAME: Our name for authentication purposes
+ */
+#ifndef PPP_OUR_NAME
+#define PPP_OUR_NAME                    "lwIP"
+#endif
+#endif /* PPP_SERVER */
 
 /**
  * VJ_SUPPORT==1: Support VJ header compression.
  */
 #ifndef VJ_SUPPORT
+#define VJ_SUPPORT                      1
+#endif
+/* VJ compression is only supported for IPv4 over PPPoS. */
+#if !PPPOS_SUPPORT || !PPP_IPV4_SUPPORT
+#undef VJ_SUPPORT
 #define VJ_SUPPORT                      0
+#endif /* !PPPOS_SUPPORT */
+
+/**
+ * PPP_MD5_RANDM==1: Use MD5 for better randomness.
+ * Enabled by default if CHAP, EAP, or L2TP AUTH support is enabled.
+ */
+#ifndef PPP_MD5_RANDM
+#define PPP_MD5_RANDM                   (CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT)
 #endif
 
 /**
- * MD5_SUPPORT==1: Support MD5 (see also CHAP).
+ * PolarSSL library, used if necessary and not previously disabled
+ *
+ *
+ * lwIP contains some files fetched from the latest BSD release of
+ * the PolarSSL project for ciphers and encryption methods we need for lwIP
+ * PPP support.
+ *
+ * The PolarSSL files were cleaned to contain only the necessary struct
+ * fields and functions needed for lwIP.
+ *
+ * The PolarSSL API was not changed at all, so if you are already using
+ * PolarSSL you can choose to skip the compilation of the included PolarSSL
+ * library into lwIP:
+ *
+ * The following defines are available for flexibility:
+ *
+ * LWIP_INCLUDED_POLARSSL_MD4   ; Use lwIP internal PolarSSL for MD4
+ * LWIP_INCLUDED_POLARSSL_MD5   ; Use lwIP internal PolarSSL for MD5
+ * LWIP_INCLUDED_POLARSSL_SHA1  ; Use lwIP internal PolarSSL for SHA1
+ * LWIP_INCLUDED_POLARSSL_DES   ; Use lwIP internal PolarSSL for DES
+ *
+ * If set (=1), the default if required by another enabled PPP feature unless
+ * explicitly set to 0, using included lwIP PolarSSL.
+ *
+ * If clear (=0), not needed or using external PolarSSL.
+ *
+ * Beware of the stack requirements which can be a lot larger if you are not
+ * using our cleaned PolarSSL library.
  */
-#ifndef MD5_SUPPORT
-#define MD5_SUPPORT                     0
-#endif
+
+/* CHAP, EAP, L2TP AUTH and MD5 Random require MD5 support */
+#if CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM
+#ifndef LWIP_INCLUDED_POLARSSL_MD5
+#define LWIP_INCLUDED_POLARSSL_MD5        1
+#endif /* LWIP_INCLUDED_POLARSSL_MD5 */
+#endif /* CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM */
+
+#if MSCHAP_SUPPORT
+/* MSCHAP require MD4 support */
+#ifndef LWIP_INCLUDED_POLARSSL_MD4
+#define LWIP_INCLUDED_POLARSSL_MD4      1
+#endif /* LWIP_INCLUDED_POLARSSL_MD4 */
+/* MSCHAP require SHA1 support */
+#ifndef LWIP_INCLUDED_POLARSSL_SHA1
+#define LWIP_INCLUDED_POLARSSL_SHA1     1
+#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
+/* MSCHAP require DES support */
+#ifndef LWIP_INCLUDED_POLARSSL_DES
+#define LWIP_INCLUDED_POLARSSL_DES      1
+#endif /* LWIP_INCLUDED_POLARSSL_DES */
+/* MS-CHAP support is required for MPPE */
+#if MPPE_SUPPORT
+/* MPPE require ARC4 support */
+#ifndef LWIP_INCLUDED_POLARSSL_ARC4
+#define LWIP_INCLUDED_POLARSSL_ARC4     1
+#endif /* LWIP_INCLUDED_POLARSSL_ARC4*/
+#endif /* MPPE_SUPPORT */
+#endif /* MSCHAP_SUPPORT */
+
+/* Default value if unset */
+#ifndef LWIP_INCLUDED_POLARSSL_MD4
+#define LWIP_INCLUDED_POLARSSL_MD4      0
+#endif /* LWIP_INCLUDED_POLARSSL_MD4 */
+#ifndef LWIP_INCLUDED_POLARSSL_MD5
+#define LWIP_INCLUDED_POLARSSL_MD5      0
+#endif /* LWIP_INCLUDED_POLARSSL_MD5 */
+#ifndef LWIP_INCLUDED_POLARSSL_SHA1
+#define LWIP_INCLUDED_POLARSSL_SHA1     0
+#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
+#ifndef LWIP_INCLUDED_POLARSSL_DES
+#define LWIP_INCLUDED_POLARSSL_DES      0
+#endif /* LWIP_INCLUDED_POLARSSL_DES */
+#ifndef LWIP_INCLUDED_POLARSSL_ARC4
+#define LWIP_INCLUDED_POLARSSL_ARC4     0
+#endif /* LWIP_INCLUDED_POLARSSL_ARC4 */
 
 /*
- * Timeouts
+ * PPP Timeouts
+ */
+
+/**
+ * FSM_DEFTIMEOUT: Timeout time in seconds
  */
 #ifndef FSM_DEFTIMEOUT
-#define FSM_DEFTIMEOUT                  6       /* Timeout time in seconds */
+#define FSM_DEFTIMEOUT                  6
 #endif
 
+/**
+ * FSM_DEFMAXTERMREQS: Maximum Terminate-Request transmissions
+ */
 #ifndef FSM_DEFMAXTERMREQS
-#define FSM_DEFMAXTERMREQS              2       /* Maximum Terminate-Request transmissions */
+#define FSM_DEFMAXTERMREQS              2
 #endif
 
+/**
+ * FSM_DEFMAXCONFREQS: Maximum Configure-Request transmissions
+ */
 #ifndef FSM_DEFMAXCONFREQS
-#define FSM_DEFMAXCONFREQS              10      /* Maximum Configure-Request transmissions */
+#define FSM_DEFMAXCONFREQS              10
 #endif
 
+/**
+ * FSM_DEFMAXNAKLOOPS: Maximum number of nak loops
+ */
 #ifndef FSM_DEFMAXNAKLOOPS
-#define FSM_DEFMAXNAKLOOPS              5       /* Maximum number of nak loops */
+#define FSM_DEFMAXNAKLOOPS              5
 #endif
 
+/**
+ * UPAP_DEFTIMEOUT: Timeout (seconds) for retransmitting req
+ */
 #ifndef UPAP_DEFTIMEOUT
-#define UPAP_DEFTIMEOUT                 6       /* Timeout (seconds) for retransmitting req */
+#define UPAP_DEFTIMEOUT                 6
 #endif
 
+/**
+ * UPAP_DEFTRANSMITS: Maximum number of auth-reqs to send
+ */
+#ifndef UPAP_DEFTRANSMITS
+#define UPAP_DEFTRANSMITS               10
+#endif
+
+#if PPP_SERVER
+/**
+ * UPAP_DEFREQTIME: Time to wait for auth-req from peer
+ */
 #ifndef UPAP_DEFREQTIME
-#define UPAP_DEFREQTIME                 30      /* Time to wait for auth-req from peer */
+#define UPAP_DEFREQTIME                 30
 #endif
+#endif /* PPP_SERVER */
 
+/**
+ * CHAP_DEFTIMEOUT: Timeout (seconds) for retransmitting req
+ */
 #ifndef CHAP_DEFTIMEOUT
-#define CHAP_DEFTIMEOUT                 6       /* Timeout time in seconds */
+#define CHAP_DEFTIMEOUT                 6
 #endif
 
+/**
+ * CHAP_DEFTRANSMITS: max # times to send challenge
+ */
 #ifndef CHAP_DEFTRANSMITS
-#define CHAP_DEFTRANSMITS               10      /* max # times to send challenge */
+#define CHAP_DEFTRANSMITS               10
 #endif
 
-/* Interval in seconds between keepalive echo requests, 0 to disable. */
+#if PPP_SERVER
+/**
+ * CHAP_DEFRECHALLENGETIME: If this option is > 0, rechallenge the peer every n seconds
+ */
+#ifndef CHAP_DEFRECHALLENGETIME
+#define CHAP_DEFRECHALLENGETIME         0
+#endif
+#endif /* PPP_SERVER */
+
+/**
+ * EAP_DEFREQTIME: Time to wait for peer request
+ */
+#ifndef EAP_DEFREQTIME
+#define EAP_DEFREQTIME                  6
+#endif
+
+/**
+ * EAP_DEFALLOWREQ: max # times to accept requests
+ */
+#ifndef EAP_DEFALLOWREQ
+#define EAP_DEFALLOWREQ                 10
+#endif
+
+#if PPP_SERVER
+/**
+ * EAP_DEFTIMEOUT: Timeout (seconds) for rexmit
+ */
+#ifndef EAP_DEFTIMEOUT
+#define EAP_DEFTIMEOUT                  6
+#endif
+
+/**
+ * EAP_DEFTRANSMITS: max # times to transmit
+ */
+#ifndef EAP_DEFTRANSMITS
+#define EAP_DEFTRANSMITS                10
+#endif
+#endif /* PPP_SERVER */
+
+/**
+ * LCP_DEFLOOPBACKFAIL: Default number of times we receive our magic number from the peer
+ * before deciding the link is looped-back.
+ */
+#ifndef LCP_DEFLOOPBACKFAIL
+#define LCP_DEFLOOPBACKFAIL             10
+#endif
+
+/**
+ * LCP_ECHOINTERVAL: Interval in seconds between keepalive echo requests, 0 to disable.
+ */
 #ifndef LCP_ECHOINTERVAL
 #define LCP_ECHOINTERVAL                0
 #endif
 
-/* Number of unanswered echo requests before failure. */
+/**
+ * LCP_MAXECHOFAILS: Number of unanswered echo requests before failure.
+ */
 #ifndef LCP_MAXECHOFAILS
 #define LCP_MAXECHOFAILS                3
 #endif
 
-/* Max Xmit idle time (in jiffies) before resend flag char. */
+/**
+ * PPP_MAXIDLEFLAG: Max Xmit idle time (in ms) before resend flag char.
+ */
 #ifndef PPP_MAXIDLEFLAG
 #define PPP_MAXIDLEFLAG                 100
 #endif
 
-/*
- * Packet sizes
- *
- * Note - lcp shouldn't be allowed to negotiate stuff outside these
- *    limits.  See lcp.h in the pppd directory.
- * (XXX - these constants should simply be shared by lcp.c instead
- *    of living in lcp.h)
+/**
+ * PPP Packet sizes
  */
-#define PPP_MTU                         1500     /* Default MTU (size of Info field) */
-#ifndef PPP_MAXMTU
-/* #define PPP_MAXMTU  65535 - (PPP_HDRLEN + PPP_FCSLEN) */
-#define PPP_MAXMTU                      1500 /* Largest MTU we allow */
-#endif
-#define PPP_MINMTU                      64
-#define PPP_MRU                         1500     /* default MRU = max length of info field */
-#define PPP_MAXMRU                      1500     /* Largest MRU we allow */
-#ifndef PPP_DEFMRU
-#define PPP_DEFMRU                      296             /* Try for this */
-#endif
-#define PPP_MINMRU                      128             /* No MRUs below this */
 
-#ifndef MAXNAMELEN
-#define MAXNAMELEN                      256     /* max length of hostname or name for auth */
+/**
+ * PPP_MRU: Default MRU
+ */
+#ifndef PPP_MRU
+#define PPP_MRU                         1500
 #endif
+
+/**
+ * PPP_DEFMRU: Default MRU to try
+ */
+#ifndef PPP_DEFMRU
+#define PPP_DEFMRU                      1500
+#endif
+
+/**
+ * PPP_MAXMRU: Normally limit MRU to this (pppd default = 16384)
+ */
+#ifndef PPP_MAXMRU
+#define PPP_MAXMRU                      1500
+#endif
+
+/**
+ * PPP_MINMRU: No MRUs below this
+ */
+#ifndef PPP_MINMRU
+#define PPP_MINMRU                      128
+#endif
+
+/**
+ * PPPOL2TP_DEFMRU: Default MTU and MRU for L2TP
+ * Default = 1500 - PPPoE(6) - PPP Protocol(2) - IPv4 header(20) - UDP Header(8)
+ * - L2TP Header(6) - HDLC Header(2) - PPP Protocol(2) - MPPE Header(2) - PPP Protocol(2)
+ */
+#if PPPOL2TP_SUPPORT
+#ifndef PPPOL2TP_DEFMRU
+#define PPPOL2TP_DEFMRU                 1450
+#endif
+#endif /* PPPOL2TP_SUPPORT */
+
+/**
+ * MAXNAMELEN: max length of hostname or name for auth
+ */
+#ifndef MAXNAMELEN
+#define MAXNAMELEN                      256
+#endif
+
+/**
+ * MAXSECRETLEN: max length of password or secret
+ */
 #ifndef MAXSECRETLEN
-#define MAXSECRETLEN                    256     /* max length of password or secret */
+#define MAXSECRETLEN                    256
 #endif
 
 #endif /* PPP_SUPPORT */
@@ -1837,20 +2340,30 @@
    ---------- Checksum options ----------
    --------------------------------------
 */
+
+/**
+ * LWIP_CHECKSUM_CTRL_PER_NETIF==1: Checksum generation/check can be enabled/disabled
+ * per netif.
+ * ATTENTION: if enabled, the CHECKSUM_GEN_* and CHECKSUM_CHECK_* defines must be enabled!
+ */
+#ifndef LWIP_CHECKSUM_CTRL_PER_NETIF
+#define LWIP_CHECKSUM_CTRL_PER_NETIF    0
+#endif
+
 /**
  * CHECKSUM_GEN_IP==1: Generate checksums in software for outgoing IP packets.
  */
 #ifndef CHECKSUM_GEN_IP
 #define CHECKSUM_GEN_IP                 1
 #endif
- 
+
 /**
  * CHECKSUM_GEN_UDP==1: Generate checksums in software for outgoing UDP packets.
  */
 #ifndef CHECKSUM_GEN_UDP
 #define CHECKSUM_GEN_UDP                1
 #endif
- 
+
 /**
  * CHECKSUM_GEN_TCP==1: Generate checksums in software for outgoing TCP packets.
  */
@@ -1864,14 +2377,21 @@
 #ifndef CHECKSUM_GEN_ICMP
 #define CHECKSUM_GEN_ICMP               1
 #endif
- 
+
+/**
+ * CHECKSUM_GEN_ICMP6==1: Generate checksums in software for outgoing ICMP6 packets.
+ */
+#ifndef CHECKSUM_GEN_ICMP6
+#define CHECKSUM_GEN_ICMP6              1
+#endif
+
 /**
  * CHECKSUM_CHECK_IP==1: Check checksums in software for incoming IP packets.
  */
 #ifndef CHECKSUM_CHECK_IP
 #define CHECKSUM_CHECK_IP               1
 #endif
- 
+
 /**
  * CHECKSUM_CHECK_UDP==1: Check checksums in software for incoming UDP packets.
  */
@@ -1884,6 +2404,20 @@
  */
 #ifndef CHECKSUM_CHECK_TCP
 #define CHECKSUM_CHECK_TCP              1
+#endif
+
+/**
+ * CHECKSUM_CHECK_ICMP==1: Check checksums in software for incoming ICMP packets.
+ */
+#ifndef CHECKSUM_CHECK_ICMP
+#define CHECKSUM_CHECK_ICMP             1
+#endif
+
+/**
+ * CHECKSUM_CHECK_ICMP6==1: Check checksums in software for incoming ICMPv6 packets
+ */
+#ifndef CHECKSUM_CHECK_ICMP6
+#define CHECKSUM_CHECK_ICMP6            1
 #endif
 
 /**
@@ -1940,13 +2474,6 @@
  */
 #ifndef LWIP_ICMP6_HL
 #define LWIP_ICMP6_HL                   255
-#endif
-
-/**
- * LWIP_ICMP6_CHECKSUM_CHECK==1: verify checksum on ICMPv6 packets
- */
-#ifndef LWIP_ICMP6_CHECKSUM_CHECK
-#define LWIP_ICMP6_CHECKSUM_CHECK       1
 #endif
 
 /**
@@ -2145,6 +2672,73 @@
  * - dest: destination IPv4 address
  * Returns the destination netif or NULL if no destination netif is found. In
  * that case, ip_route() continues as normal.
+ */
+
+/**
+ * LWIP_HOOK_IP4_ROUTE_SRC(dest, src):
+ * - source-based routing for IPv4 (see LWIP_HOOK_IP4_ROUTE(), src may be NULL)
+ */
+
+/**
+ * LWIP_HOOK_ETHARP_GET_GW(netif, dest):
+ * - called from etharp_output() (IPv4)
+ * - netif: the netif used for sending
+ * - dest: the destination IPv4 address
+ * Returns the IPv4 address of the gateway to handle the specified destination
+ * IPv4 address. If NULL is returned, the netif's default gateway is used.
+ * The returned address MUST be reachable on the specified netif!
+ * This function is meant to implement advanced IPv4 routing together with
+ * LWIP_HOOK_IP4_ROUTE(). The actual routing/gateway table implementation is
+ * not part of lwIP but can e.g. be hidden in the netif's state argument.
+*/
+
+/**
+ * LWIP_HOOK_IP6_INPUT(pbuf, input_netif):
+ * - called from ip6_input() (IPv6)
+ * - pbuf: received struct pbuf passed to ip6_input()
+ * - input_netif: struct netif on which the packet has been received
+ * Return values:
+ * - 0: Hook has not consumed the packet, packet is processed as normal
+ * - != 0: Hook has consumed the packet.
+ * If the hook consumed the packet, 'pbuf' is in the responsibility of the hook
+ * (i.e. free it when done).
+ */
+
+/**
+ * LWIP_HOOK_IP6_ROUTE(src, dest):
+ * - called from ip6_route() (IPv6)
+ * - src: sourc IPv6 address
+ * - dest: destination IPv6 address
+ * Returns the destination netif or NULL if no destination netif is found. In
+ * that case, ip6_route() continues as normal.
+ */
+
+/**
+ * LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr):
+ * - called from ethernet_input() if VLAN support is enabled
+ * - netif: struct netif on which the packet has been received
+ * - eth_hdr: struct eth_hdr of the packet
+ * - vlan_hdr: struct eth_vlan_hdr of the packet
+ * Return values:
+ * - 0: Packet must be dropped.
+ * - != 0: Packet must be accepted.
+ */
+
+/**
+ * LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr):
+ * - called from etharp_raw() and etharp_send_ip() if VLAN support is enabled
+ * - netif: struct netif that the packet will be sent through
+ * - eth_hdr: struct eth_hdr of the packet
+ * - vlan_hdr: struct eth_vlan_hdr of the packet
+ * Return values:
+ * - 0: Packet shall not contain VLAN header.
+ * - != 0: Packet shall contain VLAN header.
+ * Hook can be used to set prio_vid field of vlan_hdr.
+ */
+
+/**
+ * LWIP_HOOK_MEMP_AVAILABLE(memp_t_type):
+ * - called from memp_free() when a memp pool was empty and an item is now available
  */
 
 /*
@@ -2388,20 +2982,6 @@
 #endif
 
 /**
- * SNMP_MSG_DEBUG: Enable debugging for SNMP messages.
- */
-#ifndef SNMP_MSG_DEBUG
-#define SNMP_MSG_DEBUG                  LWIP_DBG_OFF
-#endif
-
-/**
- * SNMP_MIB_DEBUG: Enable debugging for SNMP MIBs.
- */
-#ifndef SNMP_MIB_DEBUG
-#define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
-#endif
-
-/**
  * DNS_DEBUG: Enable debugging for DNS.
  */
 #ifndef DNS_DEBUG
@@ -2415,4 +2995,17 @@
 #define IP6_DEBUG                       LWIP_DBG_OFF
 #endif
 
-#endif /* __LWIP_OPT_H__ */
+/*
+   --------------------------------------------------
+   ---------- Performance tracking options ----------
+   --------------------------------------------------
+*/
+/**
+ * LWIP_PERF: Enable performance testing for lwIP
+ * (if enabled, arch/perf.h is included)
+ */
+#ifndef LWIP_PERF
+#define LWIP_PERF                       0
+#endif
+
+#endif /* LWIP_HDR_OPT_H */

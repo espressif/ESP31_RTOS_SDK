@@ -6,9 +6,9 @@
 
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -17,21 +17,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -49,8 +49,7 @@
 #include "lwip/ip.h"
 #include "lwip/raw.h"
 #include "lwip/udp.h"
-#include "lwip/tcp_impl.h"
-#include "lwip/snmp_msg.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
@@ -60,7 +59,9 @@
 #include "lwip/nd6.h"
 #include "lwip/mld6.h"
 #include "lwip/api.h"
+#include "netif/ppp/ppp_impl.h"
 
+#ifndef PERF
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
  */
@@ -73,17 +74,11 @@
 #if (!LWIP_UDP && LWIP_UDPLITE)
   #error "If you want to use UDP Lite, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
-#if (!LWIP_UDP && LWIP_SNMP)
-  #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"
-#endif
 #if (!LWIP_UDP && LWIP_DHCP)
   #error "If you want to use DHCP, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
-#if (!LWIP_UDP && LWIP_IGMP)
-  #error "If you want to use IGMP, you have to define LWIP_UDP=1 in your lwipopts.h"
-#endif
-#if (!LWIP_UDP && LWIP_SNMP)
-  #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"
+#if (!LWIP_UDP && LWIP_MULTICAST_TX_OPTIONS)
+  #error "If you want to use IGMP/LWIP_MULTICAST_TX_OPTIONS, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
 #if (!LWIP_UDP && LWIP_DNS)
   #error "If you want to use DNS, you have to define LWIP_UDP=1 in your lwipopts.h"
@@ -104,6 +99,15 @@
 #if (LWIP_IGMP && (MEMP_NUM_IGMP_GROUP<=1))
   #error "If you want to use IGMP, you have to define MEMP_NUM_IGMP_GROUP>1 in your lwipopts.h"
 #endif
+#if (LWIP_IGMP && !LWIP_MULTICAST_TX_OPTIONS)
+  #error "If you want to use IGMP, you have to define LWIP_MULTICAST_TX_OPTIONS==1 in your lwipopts.h"
+#endif
+#if (LWIP_IGMP && !LWIP_IPV4)
+  #error "IGMP needs LWIP_IPV4 enabled in your lwipopts.h"
+#endif
+#if (LWIP_MULTICAST_TX_OPTIONS && !LWIP_IPV4)
+  #error "LWIP_MULTICAST_TX_OPTIONS needs LWIP_IPV4 enabled in your lwipopts.h"
+#endif
 #if ((LWIP_NETCONN || LWIP_SOCKET) && (MEMP_NUM_TCPIP_MSG_API<=0))
   #error "If you want to use Sequential API, you have to define MEMP_NUM_TCPIP_MSG_API>=1 in your lwipopts.h"
 #endif
@@ -115,19 +119,43 @@
   #error "MEMP_NUM_REASSDATA > IP_REASS_MAX_PBUFS doesn't make sense since each struct ip_reassdata must hold 2 pbufs at least!"
 #endif
 #endif /* !MEMP_MEM_MALLOC */
-//#if (LWIP_TCP && (TCP_WND > 0xffff))
-//  #error "If you want to use TCP, TCP_WND must fit in an u16_t, so, you have to reduce it in your lwipopts.h"
+
+#if LWIP_WND_SCALE
+//#if (LWIP_TCP && (TCP_WND > 0xffffffff))
+  //#error "If you want to use TCP, TCP_WND must fit in an u32_t, so, you have to reduce it in your lwipopts.h"
 //#endif
+#if (LWIP_TCP && LWIP_WND_SCALE && (TCP_RCV_SCALE > 14))
+  #error "The maximum valid window scale value is 14!"
+#endif
+//#if (LWIP_TCP && (TCP_WND > (0xFFFFU << TCP_RCV_SCALE)))
+  //#error "TCP_WND is bigger than the configured LWIP_WND_SCALE allows!"
+//#endif
+//#if (LWIP_TCP && ((TCP_WND >> TCP_RCV_SCALE) == 0))
+  //#error "TCP_WND is too small for the configured LWIP_WND_SCALE (results in zero window)!"
+//#endif
+#else /* LWIP_WND_SCALE */
+
+#ifndef LWIP_ESP8266
+#if (LWIP_TCP && (TCP_WND > 0xffff))
+  #error "If you want to use TCP, TCP_WND must fit in an u16_t, so, you have to reduce it in your lwipopts.h (or enable window scaling)"
+#endif
+#endif
+
+#endif /* LWIP_WND_SCALE */
 #if (LWIP_TCP && (TCP_SND_QUEUELEN > 0xffff))
   #error "If you want to use TCP, TCP_SND_QUEUELEN must fit in an u16_t, so, you have to reduce it in your lwipopts.h"
 #endif
 #if (LWIP_TCP && (TCP_SND_QUEUELEN < 2))
   #error "TCP_SND_QUEUELEN must be at least 2 for no-copy TCP writes to work"
 #endif
-//#if (LWIP_TCP && ((TCP_MAXRTX > 12) || (TCP_SYNMAXRTX > 12)))
-//  #error "If you want to use TCP, TCP_MAXRTX and TCP_SYNMAXRTX must less or equal to 12 (due to tcp_backoff table), so, you have to reduce them in your lwipopts.h"
-//#endif
-#if (LWIP_TCP && TCP_LISTEN_BACKLOG && (TCP_DEFAULT_LISTEN_BACKLOG < 0) || (TCP_DEFAULT_LISTEN_BACKLOG > 0xff))
+
+#ifndef LWIP_ESP8266
+#if (LWIP_TCP && ((TCP_MAXRTX > 12) || (TCP_SYNMAXRTX > 12)))
+  #error "If you want to use TCP, TCP_MAXRTX and TCP_SYNMAXRTX must less or equal to 12 (due to tcp_backoff table), so, you have to reduce them in your lwipopts.h"
+#endif
+#endif
+
+#if (LWIP_TCP && TCP_LISTEN_BACKLOG && ((TCP_DEFAULT_LISTEN_BACKLOG < 0) || (TCP_DEFAULT_LISTEN_BACKLOG > 0xff)))
   #error "If you want to use TCP backlog, TCP_DEFAULT_LISTEN_BACKLOG must fit into an u8_t"
 #endif
 #if (LWIP_NETIF_API && (NO_SYS==1))
@@ -136,8 +164,11 @@
 #if ((LWIP_SOCKET || LWIP_NETCONN) && (NO_SYS==1))
   #error "If you want to use Sequential API, you have to define NO_SYS=0 in your lwipopts.h"
 #endif
-#if (!LWIP_NETCONN && LWIP_SOCKET)
-  #error "If you want to use Socket API, you have to define LWIP_NETCONN=1 in your lwipopts.h"
+#if (LWIP_PPP_API && (NO_SYS==1))
+  #error "If you want to use PPP API, you have to define NO_SYS=0 in your lwipopts.h"
+#endif
+#if (LWIP_PPP_API && (PPP_SUPPORT==0))
+  #error "If you want to use PPP API, you have to enable PPP_SUPPORT in your lwipopts.h"
 #endif
 #if (((!LWIP_DHCP) || (!LWIP_AUTOIP)) && LWIP_DHCP_AUTOIP_COOP)
   #error "If you want to use DHCP/AUTOIP cooperation mode, you have to define LWIP_DHCP=1 and LWIP_AUTOIP=1 in your lwipopts.h"
@@ -147,12 +178,6 @@
 #endif
 #if (!LWIP_ARP && LWIP_AUTOIP)
   #error "If you want to use AUTOIP, you have to define LWIP_ARP=1 in your lwipopts.h"
-#endif
-#if (LWIP_SNMP && (SNMP_CONCURRENT_REQUESTS<=0))
-  #error "If you want to use SNMP, you have to define SNMP_CONCURRENT_REQUESTS>=1 in your lwipopts.h"
-#endif
-#if (LWIP_SNMP && (SNMP_TRAP_DESTINATIONS<=0))
-  #error "If you want to use SNMP, you have to define SNMP_TRAP_DESTINATIONS>=1 in your lwipopts.h"
 #endif
 #if (LWIP_TCP && ((LWIP_EVENT_API && LWIP_CALLBACK_API) || (!LWIP_EVENT_API && !LWIP_CALLBACK_API)))
   #error "One and exactly one of LWIP_EVENT_API and LWIP_CALLBACK_API has to be enabled in your lwipopts.h"
@@ -169,8 +194,17 @@
 #if (DNS_LOCAL_HOSTLIST && !DNS_LOCAL_HOSTLIST_IS_DYNAMIC && !(defined(DNS_LOCAL_HOSTLIST_INIT)))
   #error "you have to define define DNS_LOCAL_HOSTLIST_INIT {{'host1', 0x123}, {'host2', 0x234}} to initialize DNS_LOCAL_HOSTLIST"
 #endif
-#if PPP_SUPPORT && !PPPOS_SUPPORT & !PPPOE_SUPPORT
-  #error "PPP_SUPPORT needs either PPPOS_SUPPORT or PPPOE_SUPPORT turned on"
+#if PPP_SUPPORT && !PPPOS_SUPPORT && !PPPOE_SUPPORT && !PPPOL2TP_SUPPORT
+  #error "PPP_SUPPORT needs at least one of PPPOS_SUPPORT, PPPOE_SUPPORT or PPPOL2TP_SUPPORT turned on"
+#endif
+#if PPP_SUPPORT && !PPP_IPV4_SUPPORT && !PPP_IPV6_SUPPORT
+  #error "PPP_SUPPORT needs PPP_IPV4_SUPPORT and/or PPP_IPV6_SUPPORT turned on"
+#endif
+#if PPP_SUPPORT && PPP_IPV4_SUPPORT && !LWIP_IPV4
+  #error "PPP_IPV4_SUPPORT needs LWIP_IPV4 turned on"
+#endif
+#if PPP_SUPPORT && PPP_IPV6_SUPPORT && !LWIP_IPV6
+  #error "PPP_IPV6_SUPPORT needs LWIP_IPV6 turned on"
 #endif
 #if !LWIP_ETHERNET && (LWIP_ARP || PPPOE_SUPPORT)
   #error "LWIP_ETHERNET needs to be turned on for LWIP_ARP or PPPOE_SUPPORT"
@@ -194,12 +228,9 @@
 #if NETCONN_MORE != TCP_WRITE_FLAG_MORE
   #error "NETCONN_MORE != TCP_WRITE_FLAG_MORE"
 #endif
-#endif /* LWIP_NETCONN && LWIP_TCP */ 
+#endif /* LWIP_NETCONN && LWIP_TCP */
 #if LWIP_SOCKET
 /* Check that the SO_* socket options and SOF_* lwIP-internal flags match */
-#if SO_ACCEPTCONN != SOF_ACCEPTCONN
-  #error "SO_ACCEPTCONN != SOF_ACCEPTCONN"
-#endif
 #if SO_REUSEADDR != SOF_REUSEADDR
   #error "WARNING: SO_REUSEADDR != SOF_REUSEADDR"
 #endif
@@ -209,9 +240,6 @@
 #if SO_BROADCAST != SOF_BROADCAST
   #error "WARNING: SO_BROADCAST != SOF_BROADCAST"
 #endif
-#if SO_LINGER != SOF_LINGER
-  #error "WARNING: SO_LINGER != SOF_LINGER"
-#endif
 #endif /* LWIP_SOCKET */
 
 
@@ -219,9 +247,6 @@
  */
 #ifdef MEMP_NUM_TCPIP_MSG
   #error "MEMP_NUM_TCPIP_MSG option is deprecated. Remove it from your lwipopts.h."
-#endif
-#ifdef MEMP_NUM_API_MSG
-  #error "MEMP_NUM_API_MSG option is deprecated. Remove it from your lwipopts.h."
 #endif
 #ifdef TCP_REXMIT_DEBUG
   #error "TCP_REXMIT_DEBUG option is deprecated. Remove it from your lwipopts.h."
@@ -273,27 +298,43 @@
 #if TCP_SNDLOWAT >= TCP_SND_BUF
   #error "lwip_sanity_check: WARNING: TCP_SNDLOWAT must be less than TCP_SND_BUF. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
 #endif
+#if TCP_SNDLOWAT >= (0xFFFF - (4 * TCP_MSS))
+  #error "lwip_sanity_check: WARNING: TCP_SNDLOWAT must at least be 4*MSS below u16_t overflow!"
+#endif
 #if TCP_SNDQUEUELOWAT >= TCP_SND_QUEUELEN
   #error "lwip_sanity_check: WARNING: TCP_SNDQUEUELOWAT must be less than TCP_SND_QUEUELEN. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
 #endif
-#if !MEMP_MEM_MALLOC && (PBUF_POOL_BUFSIZE <= (PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))
+#if !MEMP_MEM_MALLOC && (PBUF_POOL_BUFSIZE <= (PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))
   #error "lwip_sanity_check: WARNING: PBUF_POOL_BUFSIZE does not provide enough space for protocol headers. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
 #endif
-//#if !MEMP_MEM_MALLOC && (TCP_WND > (PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - (PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))))
-//  #error "lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - protocol headers). If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
-//#endif
-//#if TCP_WND < TCP_MSS
-//  #error "lwip_sanity_check: WARNING: TCP_WND is smaller than MSS. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
-//#endif
+
+#ifndef LWIP_ESP8266
+#if !MEMP_MEM_MALLOC && (TCP_WND > (PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - (PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))))
+  #error "lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - protocol headers). If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
+
+#if TCP_WND < TCP_MSS
+  #error "lwip_sanity_check: WARNING: TCP_WND is smaller than MSS. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
+#endif
+
 #endif /* LWIP_TCP */
 #endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
+#endif
 
 /**
- * Perform Sanity check of user-configurable values, and initialize all modules.
+ * Initialize all modules.
  */
 void
 lwip_init(void)
 {
+#ifdef LWIP_ESP8266
+//  MEMP_NUM_TCP_PCB = 5;
+//  TCP_WND = (4 * TCP_MSS);
+//  TCP_MAXRTX = 12;
+//  TCP_SYNMAXRTX = 6;
+#endif
+
   /* Modules initialization */
   stats_init();
 #if !NO_SYS
@@ -303,13 +344,12 @@ lwip_init(void)
   memp_init();
   pbuf_init();
   netif_init();
-#if LWIP_SOCKET
-  lwip_socket_init();
-#endif /* LWIP_SOCKET */
+#if LWIP_IPV4
   ip_init();
 #if LWIP_ARP
   etharp_init();
 #endif /* LWIP_ARP */
+#endif /* LWIP_IPV4 */
 #if LWIP_RAW
   raw_init();
 #endif /* LWIP_RAW */
@@ -319,9 +359,6 @@ lwip_init(void)
 #if LWIP_TCP
   tcp_init();
 #endif /* LWIP_TCP */
-#if LWIP_SNMP
-  snmp_init();
-#endif /* LWIP_SNMP */
 #if LWIP_AUTOIP
   autoip_init();
 #endif /* LWIP_AUTOIP */
@@ -331,13 +368,9 @@ lwip_init(void)
 #if LWIP_DNS
   dns_init();
 #endif /* LWIP_DNS */
-#if LWIP_IPV6
-  ip6_init();
-  nd6_init();
-#if LWIP_IPV6_MLD
-  mld6_init();
-#endif /* LWIP_IPV6_MLD */
-#endif /* LWIP_IPV6 */
+#if PPP_SUPPORT
+  ppp_init();
+#endif
 
 #if LWIP_TIMERS
   sys_timeouts_init();

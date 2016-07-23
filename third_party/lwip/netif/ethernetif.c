@@ -6,9 +6,9 @@
 
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -17,26 +17,35 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
 
+/*
+ * This file is a skeleton for developing Ethernet network interface
+ * drivers for lwIP. Add code to the low_level functions and do a
+ * search-and-replace for the word "ethernetif" to replace it with
+ * something that better describes your network interface.
+ */
+
 #include "lwip/opt.h"
+
+#if 0 /* don't build, this is only a skeleton, see previous comment */
 
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -45,18 +54,26 @@
 #include "lwip/snmp.h"
 #include "lwip/ethip6.h"
 #include "netif/etharp.h"
-#include "netif/ppp_oe.h"
-
-//#include "esp_common.h"
-#include <stdio.h>
+#include "netif/ppp/pppoe.h"
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
 #define IFNAME1 'n'
 
-static char hostname[16];
+/**
+ * Helper struct to hold private data used to operate your ethernet interface.
+ * Keeping the ethernet address of the MAC in this struct is not necessary
+ * as it is already kept in the struct netif.
+ * But this is only an example, anyway...
+ */
+struct ethernetif {
+  struct eth_addr *ethaddr;
+  /* Add whatever per-interface state that is needed here. */
+};
 
-extern sint8 ieee80211_output_pbuf(struct netif *ifp, struct pbuf *pb);
+/* Forward declarations. */
+static void  ethernetif_input(struct netif *netif);
+
 /**
  * In this function, the hardware should be initialized.
  * Called from ethernetif_init().
@@ -66,20 +83,42 @@ extern sint8 ieee80211_output_pbuf(struct netif *ifp, struct pbuf *pb);
  */
 static void
 low_level_init(struct netif *netif)
-{  
+{
+  struct ethernetif *ethernetif = netif->state;
+
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
+  netif->hwaddr[0] = ;
+  ...
+  netif->hwaddr[5] = ;
 
   /* maximum transfer unit */
   netif->mtu = 1500;
-  
+
   /* device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
- 
-  /* Do whatever else is needed to initialize interface. */  
+
+#if LWIP_IGMP
+	netif->flags |= NETIF_FLAG_IGMP;
+#endif
+  
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+  /*
+   * For hardware/netifs that implement MAC filtering.
+   * All-nodes link-local is handled by default, so we must let the hardware know
+   * to allow multicast packets in.
+   * Should set mld_mac_filter previously. */
+  if (netif->mld_mac_filter != NULL) {
+    ip6_addr_t ip6_allnodes_ll;
+    ip6_addr_set_allnodes_linklocal(&ip6_allnodes_ll);
+    netif->mld_mac_filter(netif, &ip6_allnodes_ll, MLD6_ADD_MAC_FILTER);
+  }
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
+
+  /* Do whatever else is needed to initialize interface. */
 }
 
 /**
@@ -94,7 +133,7 @@ low_level_init(struct netif *netif)
  *
  * @note Returning ERR_MEM here if a DMA queue of your MAC is full can lead to
  *       strange results. You might consider waiting for space in the DMA queue
- *       to become availale since the stack doesn't retry to send a packet
+ *       to become available since the stack doesn't retry to send a packet
  *       dropped because of memory failure (except for the TCP timers).
  */
 
@@ -104,37 +143,89 @@ low_level_output(struct netif *netif, struct pbuf *p)
   struct ethernetif *ethernetif = netif->state;
   struct pbuf *q;
 
-//  initiate transfer();
-  
+  initiate transfer();
+
 #if ETH_PAD_SIZE
   pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
 
-  struct pbuf *tmp;
-  for(q = p; q != NULL; ) {
+  for (q = p; q != NULL; q = q->next) {
     /* Send the data from the pbuf to the interface, one pbuf at a
        time. The size of the data in each pbuf is kept in the ->len
        variable. */
-//    send data from(q->payload, q->len);
-    tmp = q;
-    q = q->next;
-    tmp->next = NULL;
-    //tmp = q->next;
-    //q->next = NULL;
-    ieee80211_output_pbuf(netif, tmp);
-    //q->next = tmp;
-	//break;
+    send data from(q->payload, q->len);
   }
 
-//  signal that packet should be sent();
+  signal that packet should be sent();
 
 #if ETH_PAD_SIZE
   pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
-  
+
   LINK_STATS_INC(link.xmit);
 
   return ERR_OK;
+}
+
+/**
+ * Should allocate a pbuf and transfer the bytes of the incoming
+ * packet from the interface into the pbuf.
+ *
+ * @param netif the lwip network interface structure for this ethernetif
+ * @return a pbuf filled with the received packet (including MAC header)
+ *         NULL on memory error
+ */
+static struct pbuf *
+low_level_input(struct netif *netif)
+{
+  struct ethernetif *ethernetif = netif->state;
+  struct pbuf *p, *q;
+  u16_t len;
+
+  /* Obtain the size of the packet and put it into the "len"
+     variable. */
+  len = ;
+
+#if ETH_PAD_SIZE
+  len += ETH_PAD_SIZE; /* allow room for Ethernet padding */
+#endif
+
+  /* We allocate a pbuf chain of pbufs from the pool. */
+  p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
+
+  if (p != NULL) {
+
+#if ETH_PAD_SIZE
+    pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
+#endif
+
+    /* We iterate over the pbuf chain until we have read the entire
+     * packet into the pbuf. */
+    for (q = p; q != NULL; q = q->next) {
+      /* Read enough bytes to fill this pbuf in the chain. The
+       * available data in the pbuf is given by the q->len
+       * variable.
+       * This does not necessarily have to be a memcpy, you can also preallocate
+       * pbufs for a DMA-enabled MAC and after receiving truncate it to the
+       * actually received size. In this case, ensure the tot_len member of the
+       * pbuf is the sum of the chained pbuf len members.
+       */
+      read data into(q->payload, q->len);
+    }
+    acknowledge that packet has been read();
+
+#if ETH_PAD_SIZE
+    pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
+#endif
+
+    LINK_STATS_INC(link.recv);
+  } else {
+    drop packet();
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.drop);
+  }
+
+  return p;
 }
 
 /**
@@ -146,32 +237,19 @@ low_level_output(struct netif *netif, struct pbuf *p)
  *
  * @param netif the lwip network interface structure for this ethernetif
  */
-void
-ethernetif_input(struct netif *netif, struct pbuf *p)
+static void
+ethernetif_input(struct netif *netif)
 {
   struct ethernetif *ethernetif;
   struct eth_hdr *ethhdr;
-
-
-if(p == NULL)
-	goto _exit;
-
-
-if(p->payload == NULL)
-{
-    pbuf_free(p);
-	goto _exit;
-}
-
-
-if(netif == NULL)
-{
-	goto _exit;
-}
-
+  struct pbuf *p;
 
   ethernetif = netif->state;
 
+  /* move received packet into a new pbuf */
+  p = low_level_input(netif);
+  /* no packet could be read, silently ignore this */
+  if (p == NULL) return;
   /* points to packet payload, which starts with an Ethernet header */
   ethhdr = p->payload;
 
@@ -198,8 +276,6 @@ if(netif == NULL)
     p = NULL;
     break;
   }
-_exit:
-;	
 }
 
 /**
@@ -214,21 +290,22 @@ _exit:
  *         ERR_MEM if private data couldn't be allocated
  *         any other err_t on error
  */
-err_t ethernetif_init(struct netif *netif)
+err_t
+ethernetif_init(struct netif *netif)
 {
+  struct ethernetif *ethernetif;
+
   LWIP_ASSERT("netif != NULL", (netif != NULL));
 
-#if LWIP_NETIF_HOSTNAME
-  // TODO: need to add later @ wjg, 15.10.29
-//  if (wifi_get_netif(STATION_IF) == netif)
-   if (1) {
-
-    /* Initialize interface hostname */
-	sprintf(hostname, "ESP_%02X%02X%02X", netif->hwaddr[3], netif->hwaddr[4], netif->hwaddr[5]);
-    netif->hostname = hostname;
-  } else {
-	netif->hostname = NULL;
+  ethernetif = mem_malloc(sizeof(struct ethernetif));
+  if (ethernetif == NULL) {
+    LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: out of memory\n"));
+    return ERR_MEM;
   }
+
+#if LWIP_NETIF_HOSTNAME
+  /* Initialize interface hostname */
+  netif->hostname = "lwip";
 #endif /* LWIP_NETIF_HOSTNAME */
 
   /*
@@ -236,8 +313,9 @@ err_t ethernetif_init(struct netif *netif)
    * The last argument should be replaced with your link speed, in units
    * of bits per second.
    */
-  NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, LINK_SPEED_OF_YOUR_NETIF_IN_BPS);
+  MIB2_INIT_NETIF(netif, snmp_ifType_ethernet_csmacd, LINK_SPEED_OF_YOUR_NETIF_IN_BPS);
 
+  netif->state = ethernetif;
   netif->name[0] = IFNAME0;
   netif->name[1] = IFNAME1;
   /* We directly use etharp_output() here to save a function call.
@@ -249,9 +327,13 @@ err_t ethernetif_init(struct netif *netif)
   netif->output_ip6 = ethip6_output;
 #endif /* LWIP_IPV6 */
   netif->linkoutput = low_level_output;
-  
+
+  ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
+
   /* initialize the hardware */
   low_level_init(netif);
 
   return ERR_OK;
 }
+
+#endif /* 0 */

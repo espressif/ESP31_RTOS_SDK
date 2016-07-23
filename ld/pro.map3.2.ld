@@ -79,6 +79,7 @@ EXTERN(_Level5Vector)
 EXTERN(_DebugExceptionVector)
 EXTERN(_NMIExceptionVector)
 EXTERN(_KernelExceptionVector)
+EXTERN(_UserExceptionVector)
 EXTERN(_DoubleExceptionVector)
 PROVIDE(_memmap_vecbase_reset = 0x40000000);
 /* Various memory-map dependent cache attribute settings: */

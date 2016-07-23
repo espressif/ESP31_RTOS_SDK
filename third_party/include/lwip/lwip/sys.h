@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -11,26 +11,26 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_SYS_H__
-#define __LWIP_SYS_H__
+#ifndef LWIP_HDR_SYS_H
+#define LWIP_HDR_SYS_H
 
 #include "lwip/opt.h"
 
@@ -52,7 +52,9 @@ typedef u8_t sys_mbox_t;
 #define sys_arch_sem_wait(s,t)
 #define sys_sem_free(s)
 #define sys_sem_valid(s) 0
+#define sys_sem_valid_val(s) 0
 #define sys_sem_set_invalid(s)
+#define sys_sem_set_invalid_val(s)
 #define sys_mutex_new(mu) ERR_OK
 #define sys_mutex_lock(mu)
 #define sys_mutex_unlock(mu)
@@ -66,7 +68,9 @@ typedef u8_t sys_mbox_t;
 #define sys_mbox_trypost(m,d)
 #define sys_mbox_free(m)
 #define sys_mbox_valid(m)
+#define sys_mbox_valid_val(m)
 #define sys_mbox_set_invalid(m)
+#define sys_mbox_set_invalid_val(m)
 
 #define sys_thread_new(n,t,a,s,p)
 
@@ -80,7 +84,7 @@ typedef u8_t sys_mbox_t;
 /** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
  * For now we use the same magic value, but we allow this to change in future.
  */
-#define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT 
+#define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
 
 #include "lwip/err.h"
 #include "arch/sys_arch.h"
@@ -95,6 +99,10 @@ typedef void (*lwip_thread_fn)(void *arg);
 
 /** Define LWIP_COMPAT_MUTEX if the port has no mutexes and binary semaphores
     should be used instead */
+#ifndef LWIP_COMPAT_MUTEX
+#define LWIP_COMPAT_MUTEX 0
+#endif
+
 #if LWIP_COMPAT_MUTEX
 /* for old ports that don't have mutexes: define them to binary semaphores */
 #define sys_mutex_t                   sys_sem_t
@@ -119,7 +127,7 @@ void sys_mutex_lock(sys_mutex_t *mutex);
 void sys_mutex_unlock(sys_mutex_t *mutex);
 /** Delete a semaphore
  * @param mutex the mutex to delete */
-void sys_mutex_free(sys_mutex_t *mutex); 
+void sys_mutex_free(sys_mutex_t *mutex);
 #ifndef sys_mutex_valid
 /** Check if a mutex is valid/allocated: return 1 for valid, 0 for invalid */
 int sys_mutex_valid(sys_mutex_t *mutex);
@@ -152,24 +160,32 @@ void sys_sem_free(sys_sem_t *sem);
 /** Wait for a semaphore - forever/no timeout */
 #define sys_sem_wait(sem)                  sys_arch_sem_wait(sem, 0)
 #ifndef sys_sem_valid
-/** Check if a sempahore is valid/allocated: return 1 for valid, 0 for invalid */
+/** Check if a semaphore is valid/allocated: return 1 for valid, 0 for invalid */
 int sys_sem_valid(sys_sem_t *sem);
 #endif
 #ifndef sys_sem_set_invalid
 /** Set a semaphore invalid so that sys_sem_valid returns 0 */
 void sys_sem_set_invalid(sys_sem_t *sem);
 #endif
+#ifndef sys_sem_valid_val
+/** Same as sys_sem_valid() but taking a value, not a pointer */
+#define sys_sem_valid_val(sem)       sys_sem_valid(&(sem))
+#endif
+#ifndef sys_sem_set_invalid_val
+/** Same as sys_sem_set_invalid() but taking a value, not a pointer */
+#define sys_sem_set_invalid_val(sem) sys_sem_set_invalid(&(sem))
+#endif
 
 /* Time functions. */
 #ifndef sys_msleep
-void sys_msleep(u32_t ms); /* only has a (close to) 1 jiffy resolution. */
+void sys_msleep(u32_t ms); /* only has a (close to) 1 ms resolution. */
 #endif
 
 /* Mailbox functions. */
 
 /** Create a new mbox of specified size
  * @param mbox pointer to the mbox to create
- * @param size (miminum) number of messages in this mbox
+ * @param size (minimum) number of messages in this mbox
  * @return ERR_OK if successful, another err_t otherwise */
 err_t sys_mbox_new(sys_mbox_t *mbox, int size);
 /** Post a message to an mbox - may not fail
@@ -189,7 +205,7 @@ err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
            or SYS_ARCH_TIMEOUT on timeout
  *         The returned time has to be accurate to prevent timer jitter! */
 u32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout);
-/* Allow port to override with a macro, e.g. special timout for sys_arch_mbox_fetch() */
+/* Allow port to override with a macro, e.g. special timeout for sys_arch_mbox_fetch() */
 #ifndef sys_arch_mbox_tryfetch
 /** Wait for a new message to arrive in the mbox
  * @param mbox mbox to get a message from
@@ -212,9 +228,19 @@ int sys_mbox_valid(sys_mbox_t *mbox);
 /** Set an mbox invalid so that sys_mbox_valid returns 0 */
 void sys_mbox_set_invalid(sys_mbox_t *mbox);
 #endif
+#ifndef sys_mbox_valid_val
+/** Same as sys_mbox_valid() but taking a value, not a pointer */
+#define sys_mbox_valid_val(mbox)       sys_mbox_valid(&(mbox))
+#endif
+#ifndef sys_mbox_set_invalid_val
+/** Same as sys_mbox_set_invalid() but taking a value, not a pointer */
+#define sys_mbox_set_invalid_val(mbox) sys_mbox_set_invalid(&(mbox))
+#endif
+
 
 /** The only thread function:
  * Creates a new thread
+ * ATTENTION: although this function returns a value, it MUST NOT FAIL (ports have to assert this!)
  * @param name human-readable name for the thread (used for debugging purposes)
  * @param thread thread-function
  * @param arg parameter passed to 'thread'
@@ -224,7 +250,7 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
 
 #endif /* NO_SYS */
 
-/* sys_init() must be called before anthing else. */
+/* sys_init() must be called before anything else. */
 void sys_init(void);
 
 #ifndef sys_jiffies
@@ -333,4 +359,4 @@ void sys_arch_unprotect(sys_prot_t pval);
 }
 #endif
 
-#endif /* __LWIP_SYS_H__ */
+#endif /* LWIP_HDR_SYS_H */

@@ -17,5 +17,6 @@ var searchData=
   ['ledc_5ftimer_5fhunpause',['ledc_timer_hunpause',['../group___p_w_m___driver___a_p_is.html#ga3a5a013d74af5338f2b01e45d519fab2',1,'pwm.h']]],
   ['ledc_5ftimer_5flpause',['ledc_timer_lpause',['../group___p_w_m___driver___a_p_is.html#gac273d0caa300d371f38407d63b5cca2a',1,'pwm.h']]],
   ['ledc_5ftimer_5flstop',['ledc_timer_lstop',['../group___p_w_m___driver___a_p_is.html#gaf0c41d2fd5f9ac757b2aaff797c6b7c2',1,'pwm.h']]],
-  ['ledc_5ftimer_5flunpause',['ledc_timer_lunpause',['../group___p_w_m___driver___a_p_is.html#gaebe2c66db6cc2e0ffa92f82a1db467b0',1,'pwm.h']]]
+  ['ledc_5ftimer_5flunpause',['ledc_timer_lunpause',['../group___p_w_m___driver___a_p_is.html#gaebe2c66db6cc2e0ffa92f82a1db467b0',1,'pwm.h']]],
+  ['location',['location',['../structregdomain__info.html#a4186dea1702d29aa8294b7e3a239dce1',1,'regdomain_info']]]
 ];

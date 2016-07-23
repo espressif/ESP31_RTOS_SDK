@@ -157,6 +157,12 @@ def gen_appbin(app_cpu_flag,combine_bin_flag):
     Dcache_bin_name = sys.argv[6] + '/drom0.bin'
     Icache_flash_bin_name = sys.argv[6] + '/irom0_flash.bin'
 
+    if os.path.exists(flash_bin_name):           
+        os.remove(flash_bin_name)
+    if os.path.exists(Dcache_bin_name):           
+        os.remove(Dcache_bin_name)
+    if os.path.exists(Icache_flash_bin_name):           
+        os.remove(Icache_flash_bin_name)
     BIN_MAGIC_FLASH  = 0xE9
     BIN_MAGIC_IROM0  = 0xEA
     BIN_MAGIC_DROM0  = 0xEC
@@ -335,7 +341,7 @@ def gen_appbin(app_cpu_flag,combine_bin_flag):
 if __name__=='__main__':
     
     if len(sys.argv) != 7:
-        print 'Usage: gen_appbin.py eagle.app.out'
+        print 'error:parammeter is not matchable!'
         sys.exit(0) 
 
     gen_appbin(sys.argv[3],sys.argv[4])

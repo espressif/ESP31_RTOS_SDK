@@ -25,7 +25,7 @@
 #ifndef __ESP_MISC_H__
 #define __ESP_MISC_H__
 
-#include "lwip/ip_addr.h"
+#include "lwip/ip4_addr.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -92,8 +92,9 @@ enum dhcp_status {
 
 struct dhcps_lease {
     bool enable;                /**< enable DHCP lease or not */
-    struct ip_addr start_ip;    /**< start IP of IP range */
-    struct ip_addr end_ip;      /**< end IP of IP range */
+    ip4_addr_t start_ip;    /**< start IP of IP range */
+    ip4_addr_t end_ip;      /**< end IP of IP range */
+	ip4_addr_t net_mask;	/***/
 };
 
 enum dhcps_offer_option {

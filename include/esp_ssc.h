@@ -25,6 +25,8 @@
 #ifndef __ESP_SSC_H__
 #define __ESP_SSC_H__
 
+#include "c_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -12,13 +12,13 @@
  *
  * Multiple packets may be queued, also using this singly linked list.
  * This is called a "packet queue".
- * 
+ *
  * So, a packet queue consists of one or more pbuf chains, each of
  * which consist of one or more pbufs. CURRENTLY, PACKET QUEUES ARE
  * NOT SUPPORTED!!! Use helper structs to queue multiple packets.
- * 
+ *
  * The differences between a pbuf chain and a packet queue are very
- * precise but subtle. 
+ * precise but subtle.
  *
  * The last pbuf of a packet has a ->tot_len field that equals the
  * ->len field. It can be found by traversing the list. If the last
@@ -69,9 +69,8 @@
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
-#include "arch/perf.h"
 #if LWIP_TCP && TCP_QUEUE_OOSEQ
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #endif
 #if LWIP_CHECKSUM_ON_COPY
 #include "lwip/inet_chksum.h"
@@ -79,11 +78,13 @@
 
 #include <string.h>
 
-#ifdef EBUF_LWIP
-#define EP_OFFSET       36
-#else
+#ifdef MEMLEAK_DEBUG
+static const char mem_debug_file[] ICACHE_RODATA_ATTR STORE_ATTR = __FILE__;
+#endif
+
+#ifdef LWIP_ESP8266
 #define EP_OFFSET 0
-#endif /* ESF_LWIP */
+#endif
 
 #define SIZEOF_STRUCT_PBUF        LWIP_MEM_ALIGN_SIZE(sizeof(struct pbuf))
 /* Since the pool is created in memp, PBUF_POOL_BUFSIZE will be automatically
@@ -98,7 +99,7 @@
 #ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
 #include "lwip/tcpip.h"
 #define PBUF_POOL_FREE_OOSEQ_QUEUE_CALL()  do { \
-  if(tcpip_callback_with_block(pbuf_free_ooseq_callback, NULL, 0) != ERR_OK) { \
+  if (tcpip_callback_with_block(pbuf_free_ooseq_callback, NULL, 0) != ERR_OK) { \
       SYS_ARCH_PROTECT(old_level); \
       pbuf_free_ooseq_pending = 0; \
       SYS_ARCH_UNPROTECT(old_level); \
@@ -118,17 +119,13 @@ volatile u8_t pbuf_free_ooseq_pending;
  * can only be used with NO_SYS=0 and through tcpip_callback.
  */
 #if !NO_SYS
-//static
+static
 #endif /* !NO_SYS */
 void
 pbuf_free_ooseq(void)
 {
   struct tcp_pcb* pcb;
-  SYS_ARCH_DECL_PROTECT(old_level);
-
-  SYS_ARCH_PROTECT(old_level);
-  pbuf_free_ooseq_pending = 0;
-  SYS_ARCH_UNPROTECT(old_level);
+  SYS_ARCH_SET(pbuf_free_ooseq_pending, 0);
 
   for (pcb = tcp_active_pcbs; NULL != pcb; pcb = pcb->next) {
     if (NULL != pcb->ooseq) {
@@ -143,7 +140,7 @@ pbuf_free_ooseq(void)
 
 #if !NO_SYS
 /**
- * Just a callback function for tcpip_timeout() that calls pbuf_free_ooseq().
+ * Just a callback function for tcpip_callback() that calls pbuf_free_ooseq().
  */
 static void
 pbuf_free_ooseq_callback(void *arg)
@@ -158,10 +155,7 @@ static void
 pbuf_pool_is_empty(void)
 {
 #ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level);
-  pbuf_free_ooseq_pending = 1;
-  SYS_ARCH_UNPROTECT(old_level);
+  SYS_ARCH_SET(pbuf_free_ooseq_pending, 1);
 #else /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
   u8_t queued;
   SYS_ARCH_DECL_PROTECT(old_level);
@@ -170,7 +164,7 @@ pbuf_pool_is_empty(void)
   pbuf_free_ooseq_pending = 1;
   SYS_ARCH_UNPROTECT(old_level);
 
-  if(!queued) {
+  if (!queued) {
     /* queue a call to pbuf_free_ooseq if not already queued */
     PBUF_POOL_FREE_OOSEQ_QUEUE_CALL();
   }
@@ -213,7 +207,13 @@ struct pbuf *
 pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
 {
   struct pbuf *p, *q, *r;
-  u16_t offset = 0;
+  
+#ifdef LWIP_ESP8266
+    u16_t offset = 0;
+#else
+    u16_t offset;
+#endif
+  
   s32_t rem_len; /* remaining length */
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloc(length=%"U16_F")\n", length));
 
@@ -221,17 +221,27 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   switch (layer) {
   case PBUF_TRANSPORT:
     /* add room for transport (often TCP) layer header */
-    offset = PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN + EP_OFFSET;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN;
+
+#ifdef LWIP_ESP8266    //TO_DO
+    offset += EP_OFFSET;
+#endif
+    
     break;
   case PBUF_IP:
     /* add room for IP layer header */
-    offset = PBUF_LINK_HLEN + PBUF_IP_HLEN + EP_OFFSET;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN;
+
+#ifdef LWIP_ESP8266    //TO_DO
+    offset += EP_OFFSET;
+#endif
+    
     break;
   case PBUF_LINK:
     /* add room for link layer header */
-    offset = PBUF_LINK_HLEN;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
 
-#ifdef PBUF_RSV_FOR_WLAN
+#ifdef LWIP_ESP8266    //TO_DO
     /*
      * 1. LINK_HLEN 14Byte will be remove in WLAN layer
      * 2. IEEE80211_HDR_MAX_LEN needs 40 bytes.
@@ -252,20 +262,21 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
      *              total: 40B ahead sec_rsv and 44B ahead payload
      *
      */
-    offset += EP_OFFSET; //remove LINK hdr in wlan
-#endif /* PBUF_RSV_FOR_WLAN */
+    offset += EP_OFFSET;                //remove LINK hdr in wlan
+#endif   
 
     break;
-  case PBUF_RAW:
-#ifdef PBUF_RSV_FOR_WLAN
-      /*
-       *   RAW pbuf suppose
-       */
-    offset = EP_OFFSET; //remove LINK hdr in wlan
-#endif /* PBUF_RAW */
+  case PBUF_RAW_TX:
+    /* add room for encapsulating link layer headers (e.g. 802.11) */
+    offset = PBUF_LINK_ENCAPSULATION_HLEN;
     break;
-  case PBUF_MAC:
-    offset = EP_OFFSET;
+  case PBUF_RAW:
+    offset = 0;
+
+#ifdef LWIP_ESP8266    //TO_DO
+    offset += EP_OFFSET;  
+#endif
+
     break;
   default:
     LWIP_ASSERT("pbuf_alloc: bad pbuf layer", 0);
@@ -313,7 +324,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
         PBUF_POOL_IS_EMPTY();
         /* free chain so far allocated */
         pbuf_free(p);
-        /* bail out unsuccesfully */
+        /* bail out unsuccessfully */
         return NULL;
       }
       q->type = type;
@@ -353,14 +364,10 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     p->len = p->tot_len = length;
     p->next = NULL;
     p->type = type;
-    p->eb = NULL;
 
     LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
            ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
-#ifdef EBUF_LWIP
-  case PBUF_ESF_RX:
-#endif /* ESF_LWIP */
   /* pbuf references existing (non-volatile static constant) ROM payload? */
   case PBUF_ROM:
   /* pbuf references existing (externally allocated) RAM payload? */
@@ -387,6 +394,10 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   p->ref = 1;
   /* set flags */
   p->flags = 0;
+  
+#ifdef LWIP_ESP8266
+  p->eb = NULL; 
+#endif
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloc(length=%"U16_F") == %p\n", length, (void *)p));
   return p;
 }
@@ -417,15 +428,19 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
   switch (l) {
   case PBUF_TRANSPORT:
     /* add room for transport (often TCP) layer header */
-    offset = PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN;
     break;
   case PBUF_IP:
     /* add room for IP layer header */
-    offset = PBUF_LINK_HLEN + PBUF_IP_HLEN;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN;
     break;
   case PBUF_LINK:
     /* add room for link layer header */
-    offset = PBUF_LINK_HLEN;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
+    break;
+  case PBUF_RAW_TX:
+    /* add room for encapsulating link layer headers (e.g. 802.11) */
+    offset = PBUF_LINK_ENCAPSULATION_HLEN;
     break;
   case PBUF_RAW:
     offset = 0;
@@ -511,7 +526,11 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 
   /* shrink allocated memory for PBUF_RAM */
   /* (other types merely adjust their length fields */
-  if ((q->type == PBUF_RAM) && (rem_len != q->len)) {
+  if ((q->type == PBUF_RAM) && (rem_len != q->len)
+#if LWIP_SUPPORT_CUSTOM_PBUF
+      && ((q->flags & PBUF_FLAG_IS_CUSTOM) == 0)
+#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
+     ) {
     /* reallocate and adjust the length of the pbuf that will be split */
     q = (struct pbuf *)mem_trim(q, (u16_t)((u8_t *)q->payload - (u8_t *)q) + rem_len);
     LWIP_ASSERT("mem_trim returned q == NULL", q != NULL);
@@ -532,26 +551,17 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 
 /**
  * Adjusts the payload pointer to hide or reveal headers in the payload.
- *
- * Adjusts the ->payload pointer so that space for a header
- * (dis)appears in the pbuf payload.
- *
- * The ->payload, ->tot_len and ->len fields are adjusted.
+ * @see pbuf_header.
  *
  * @param p pbuf to change the header size.
- * @param header_size_increment Number of bytes to increment header size which
- * increases the size of the pbuf. New space is on the front.
- * (Using a negative value decreases the header size.)
- * If hdr_size_inc is 0, this function does nothing and returns succesful.
+ * @param header_size_increment Number of bytes to increment header size.
+ * @param force Allow 'header_size_increment > 0' for PBUF_REF/PBUF_ROM types
  *
- * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
- * the call will fail. A check is made that the increase in header size does
- * not move the payload pointer in front of the start of the buffer.
  * @return non-zero on failure, zero on success.
  *
  */
-u8_t
-pbuf_header(struct pbuf *p, s16_t header_size_increment)
+static u8_t
+pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
 {
   u16_t type;
   void *payload;
@@ -561,8 +571,8 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
   if ((header_size_increment == 0) || (p == NULL)) {
     return 0;
   }
- 
-  if (header_size_increment < 0){
+
+  if (header_size_increment < 0) {
     increment_magnitude = -header_size_increment;
     /* Check that we aren't going to move off the end of the pbuf */
     LWIP_ERROR("increment_magnitude <= p->len", (increment_magnitude <= p->len), return 1;);
@@ -572,7 +582,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     /* Can't assert these as some callers speculatively call
          pbuf_header() to see if it's OK.  Will return 1 below instead. */
     /* Check that we've got the correct type of pbuf to work with */
-    LWIP_ASSERT("p->type == PBUF_RAM || p->type == PBUF_POOL", 
+    LWIP_ASSERT("p->type == PBUF_RAM || p->type == PBUF_POOL",
                 p->type == PBUF_RAM || p->type == PBUF_POOL);
     /* Check that we aren't going to move off the beginning of the pbuf */
     LWIP_ASSERT("p->payload - increment_magnitude >= p + SIZEOF_STRUCT_PBUF",
@@ -595,24 +605,21 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
         (void *)p->payload, (void *)(p + 1)));
       /* restore old payload pointer */
       p->payload = payload;
-      /* bail out unsuccesfully */
+      /* bail out unsuccessfully */
       return 1;
     }
-  /* pbuf types refering to external payloads? */
+  /* pbuf types referring to external payloads? */
   } else if (type == PBUF_REF || type == PBUF_ROM) {
     /* hide a header in the payload? */
     if ((header_size_increment < 0) && (increment_magnitude <= p->len)) {
       /* increase payload pointer */
       p->payload = (u8_t *)p->payload - header_size_increment;
+    } else if ((header_size_increment > 0) && force) {
+      p->payload = (u8_t *)p->payload - header_size_increment;
     } else {
       /* cannot expand payload to front (yet!)
-       * bail out unsuccesfully */
-      if (type == PBUF_REF) {
-        /* increase payload pointer */
-        p->payload = (u8_t *)p->payload - header_size_increment;
-      } else {
-        return 1;
-      }
+       * bail out unsuccessfully */
+      return 1;
     }
   } else {
     /* Unknown type */
@@ -627,6 +634,42 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     (void *)payload, (void *)p->payload, header_size_increment));
 
   return 0;
+}
+
+/**
+ * Adjusts the payload pointer to hide or reveal headers in the payload.
+ *
+ * Adjusts the ->payload pointer so that space for a header
+ * (dis)appears in the pbuf payload.
+ *
+ * The ->payload, ->tot_len and ->len fields are adjusted.
+ *
+ * @param p pbuf to change the header size.
+ * @param header_size_increment Number of bytes to increment header size which
+ * increases the size of the pbuf. New space is on the front.
+ * (Using a negative value decreases the header size.)
+ * If hdr_size_inc is 0, this function does nothing and returns successful.
+ *
+ * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
+ * the call will fail. A check is made that the increase in header size does
+ * not move the payload pointer in front of the start of the buffer.
+ * @return non-zero on failure, zero on success.
+ *
+ */
+u8_t
+pbuf_header(struct pbuf *p, s16_t header_size_increment)
+{
+   return pbuf_header_impl(p, header_size_increment, 0);
+}
+
+/**
+ * Same as pbuf_header but does not check if 'header_size > 0' is allowed.
+ * This is used internally only, to allow PBUF_REF for RX.
+ */
+u8_t
+pbuf_header_force(struct pbuf *p, s16_t header_size_increment)
+{
+   return pbuf_header_impl(p, header_size_increment, 1);
 }
 
 /**
@@ -654,7 +697,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
  *
  * Assuming existing chains a->b->c with the following reference
  * counts, calling pbuf_free(a) results in:
- * 
+ *
  * 1->2->3 becomes ...1->3
  * 3->3->3 becomes 2->3->3
  * 1->1->2 becomes ......1
@@ -682,11 +725,7 @@ pbuf_free(struct pbuf *p)
 
   LWIP_ASSERT("pbuf_free: sane type",
     p->type == PBUF_RAM || p->type == PBUF_ROM ||
-    p->type == PBUF_REF || p->type == PBUF_POOL 
-#ifdef EBUF_LWIP
-    || p->type == PBUF_ESF_RX
-#endif  //EBUF_LWIP
-  );
+    p->type == PBUF_REF || p->type == PBUF_POOL);
 
   count = 0;
   /* de-allocate all consecutive pbufs from the head of the chain that
@@ -722,19 +761,17 @@ pbuf_free(struct pbuf *p)
         if (type == PBUF_POOL) {
           memp_free(MEMP_PBUF_POOL, p);
         /* is this a ROM or RAM referencing pbuf? */
-        } else if (type == PBUF_ROM || type == PBUF_REF
-#ifdef EBUF_LWIP
-              || type == PBUF_ESF_RX
-#endif //EBUF_LWIP
-      ) {
-#ifdef EBUF_LWIP
-            extern void system_pp_recycle_rx_pkt(void *p);
-          system_pp_recycle_rx_pkt(p->eb);
-#endif //EBUF_LWIP
-          memp_free(MEMP_PBUF, p);
-        /* type == PBUF_RAM */
+        } else if (type == PBUF_ROM || type == PBUF_REF) {
+        
+#ifdef LWIP_ESP8266
+          extern void system_pp_recycle_rx_pkt(void*);
+          if (type == PBUF_REF && p->eb != NULL ) system_pp_recycle_rx_pkt(p->eb);
+#endif
+
+            memp_free(MEMP_PBUF, p);
+            /* type == PBUF_RAM */
         } else {
-          mem_free(p);
+            mem_free(p);
         }
       }
       count++;
@@ -794,10 +831,10 @@ pbuf_ref(struct pbuf *p)
 /**
  * Concatenate two pbufs (each may be a pbuf chain) and take over
  * the caller's reference of the tail pbuf.
- * 
+ *
  * @note The caller MAY NOT reference the tail pbuf afterwards.
  * Use pbuf_chain() for that purpose.
- * 
+ *
  * @see pbuf_chain()
  */
 
@@ -828,10 +865,10 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 
 /**
  * Chain two pbufs (or pbuf chains) together.
- * 
+ *
  * The caller MUST call pbuf_free(t) once it has stopped
  * using it. Use pbuf_cat() instead if you no longer use t.
- * 
+ *
  * @param h head pbuf (chain)
  * @param t tail pbuf (chain)
  * @note The pbufs MUST belong to the same packet.
@@ -948,14 +985,14 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
       LWIP_ERROR("p_to != NULL", (p_to != NULL) || (p_from == NULL) , return ERR_ARG;);
     }
 
-    if((p_from != NULL) && (p_from->len == p_from->tot_len)) {
+    if ((p_from != NULL) && (p_from->len == p_from->tot_len)) {
       /* don't copy more than one packet! */
-      LWIP_ERROR("pbuf_copy() does not allow packet queues!\n",
+      LWIP_ERROR("pbuf_copy() does not allow packet queues!",
                  (p_from->next == NULL), return ERR_VAL;);
     }
-    if((p_to != NULL) && (p_to->len == p_to->tot_len)) {
+    if ((p_to != NULL) && (p_to->len == p_to->tot_len)) {
       /* don't copy more than one packet! */
-      LWIP_ERROR("pbuf_copy() does not allow packet queues!\n",
+      LWIP_ERROR("pbuf_copy() does not allow packet queues!",
                   (p_to->next == NULL), return ERR_VAL;);
     }
   } while (p_from);
@@ -969,7 +1006,7 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
  *
  * @param buf the pbuf from which to copy data
  * @param dataptr the application supplied buffer
- * @param len length of data to copy (dataptr must be big enough). No more 
+ * @param len length of data to copy (dataptr must be big enough). No more
  * than buf->tot_len will be copied, irrespective of len
  * @param offset offset into the packet buffer from where to begin copying len bytes
  * @return the number of bytes copied, or 0 on failure
@@ -987,12 +1024,12 @@ pbuf_copy_partial(struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
 
   left = 0;
 
-  if((buf == NULL) || (dataptr == NULL)) {
+  if ((buf == NULL) || (dataptr == NULL)) {
     return 0;
   }
 
   /* Note some systems use byte copy if dataptr or one of the pbuf payload pointers are unaligned. */
-  for(p = buf; len != 0 && p != NULL; p = p->next) {
+  for (p = buf; len != 0 && p != NULL; p = p->next) {
     if ((offset != 0) && (offset >= p->len)) {
       /* don't copy from this buffer -> on to the next */
       offset -= p->len;
@@ -1010,6 +1047,81 @@ pbuf_copy_partial(struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
     }
   }
   return copied_total;
+}
+
+#if LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+/**
+ * This method modifies a 'pbuf chain', so that its total length is
+ * smaller than 64K. The remainder of the original pbuf chain is stored
+ * in *rest.
+ * This function never creates new pbufs, but splits an existing chain
+ * in two parts. The tot_len of the modified packet queue will likely be
+ * smaller than 64K.
+ * 'packet queues' are not supported by this function.
+ *
+ * @param p the pbuf queue to be split
+ * @param rest pointer to store the remainder (after the first 64K)
+ */
+void pbuf_split_64k(struct pbuf *p, struct pbuf **rest)
+{
+  *rest = NULL;
+  if ((p != NULL) && (p->next != NULL)) {
+    u16_t tot_len_front = p->len;
+    struct pbuf *i = p;
+    struct pbuf *r = p->next;
+
+    /* continue until the total length (summed up as u16_t) overflows */
+    while ((r != NULL) && ((u16_t)(tot_len_front + r->len) > tot_len_front)) {
+      tot_len_front += r->len;
+      i = r;
+      r = r->next;
+    }
+    /* i now points to last packet of the first segment. Set next
+       pointer to NULL */
+    i->next = NULL;
+
+    if (r != NULL) {
+      /* Update the tot_len field in the first part */
+      for (i = p; i != NULL; i = i->next) {
+        i->tot_len -= r->tot_len;
+        LWIP_ASSERT("tot_len/len mismatch in last pbuf",
+                    (i->next != NULL) || (i->tot_len == i->len));
+      }
+      if (p->flags & PBUF_FLAG_TCP_FIN) {
+        r->flags |= PBUF_FLAG_TCP_FIN;
+      }
+
+      /* tot_len field in rest does not need modifications */
+      /* reference counters do not need modifications */
+      *rest = r;
+    }
+  }
+}
+#endif /* LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+
+/**
+ * Skip a number of bytes at the start of a pbuf
+ *
+ * @param in input pbuf
+ * @param in_offset offset to skip
+ * @param out_offset resulting offset in the returned pbuf
+ * @return the pbuf in the queue where the offset is
+ */
+struct pbuf*
+pbuf_skip(struct pbuf* in, u16_t in_offset, u16_t* out_offset)
+{
+  u16_t offset_left = in_offset;
+  struct pbuf* q = in;
+
+  /* get the correct pbuf */
+  while ((q != NULL) && (q->len <= offset_left)) {
+    offset_left -= q->len;
+    q = q->next;
+  }
+  if (out_offset != NULL) {
+    *out_offset = offset_left;
+  }
+  return q;
 }
 
 /**
@@ -1030,15 +1142,16 @@ pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len)
   u16_t total_copy_len = len;
   u16_t copied_total = 0;
 
-  LWIP_ERROR("pbuf_take: invalid buf", (buf != NULL), return 0;);
-  LWIP_ERROR("pbuf_take: invalid dataptr", (dataptr != NULL), return 0;);
+  LWIP_ERROR("pbuf_take: invalid buf", (buf != NULL), return ERR_ARG;);
+  LWIP_ERROR("pbuf_take: invalid dataptr", (dataptr != NULL), return ERR_ARG;);
+  LWIP_ERROR("pbuf_take: buf not large enough", (buf->tot_len >= len), return ERR_MEM;);
 
   if ((buf == NULL) || (dataptr == NULL) || (buf->tot_len < len)) {
     return ERR_ARG;
   }
 
   /* Note some systems use byte copy if dataptr or one of the pbuf payload pointers are unaligned. */
-  for(p = buf; total_copy_len != 0; p = p->next) {
+  for (p = buf; total_copy_len != 0; p = p->next) {
     LWIP_ASSERT("pbuf_take: invalid pbuf", p != NULL);
     buf_copy_len = total_copy_len;
     if (buf_copy_len > p->len) {
@@ -1046,12 +1159,44 @@ pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len)
       buf_copy_len = p->len;
     }
     /* copy the necessary parts of the buffer */
-    MEMCPY(p->payload, &((char*)dataptr)[copied_total], buf_copy_len);
+    MEMCPY(p->payload, &((const char*)dataptr)[copied_total], buf_copy_len);
     total_copy_len -= buf_copy_len;
     copied_total += buf_copy_len;
   }
   LWIP_ASSERT("did not copy all data", total_copy_len == 0 && copied_total == len);
   return ERR_OK;
+}
+
+/**
+ * Same as pbuf_take() but puts data at an offset
+ *
+ * @param buf pbuf to fill with data
+ * @param dataptr application supplied data buffer
+ * @param len length of the application supplied data buffer
+ *
+ * @return ERR_OK if successful, ERR_MEM if the pbuf is not big enough
+ */
+err_t
+pbuf_take_at(struct pbuf *buf, const void *dataptr, u16_t len, u16_t offset)
+{
+  u16_t target_offset;
+  struct pbuf* q = pbuf_skip(buf, offset, &target_offset);
+
+  /* return requested data if pbuf is OK */
+  if ((q != NULL) && (q->tot_len >= target_offset + len)) {
+    u16_t remaining_len = len;
+    const u8_t* src_ptr = (const u8_t*)dataptr;
+    /* copy the part that goes into the first pbuf */
+    u16_t first_copy_len = LWIP_MIN(q->len - target_offset, len);
+    MEMCPY(((u8_t*)q->payload) + target_offset, dataptr, first_copy_len);
+    remaining_len -= first_copy_len;
+    src_ptr += first_copy_len;
+    if (remaining_len > 0) {
+      return pbuf_take(q->next, src_ptr, remaining_len);
+    }
+    return ERR_OK;
+  }
+  return ERR_MEM;
 }
 
 /**
@@ -1136,25 +1281,39 @@ pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
 u8_t
 pbuf_get_at(struct pbuf* p, u16_t offset)
 {
-  u16_t copy_from = offset;
-  struct pbuf* q = p;
+  u16_t q_idx;
+  struct pbuf* q = pbuf_skip(p, offset, &q_idx);
 
-  /* get the correct pbuf */
-  while ((q != NULL) && (q->len <= copy_from)) {
-    copy_from -= q->len;
-    q = q->next;
-  }
   /* return requested data if pbuf is OK */
-  if ((q != NULL) && (q->len > copy_from)) {
-    return ((u8_t*)q->payload)[copy_from];
+  if ((q != NULL) && (q->len > q_idx)) {
+    return ((u8_t*)q->payload)[q_idx];
   }
   return 0;
+}
+
+ /** Put one byte to the specified position in a pbuf
+ * WARNING: silently ignores offset >= p->tot_len
+ *
+ * @param p pbuf to fill
+ * @param offset offset into p of the byte to write
+ * @param data byte to write at an offset into p
+ */
+void
+pbuf_put_at(struct pbuf* p, u16_t offset, u8_t data)
+{
+  u16_t q_idx;
+  struct pbuf* q = pbuf_skip(p, offset, &q_idx);
+
+  /* write requested data if pbuf is OK */
+  if ((q != NULL) && (q->len > q_idx)) {
+    ((u8_t*)q->payload)[q_idx] = data;
+  }
 }
 
 /** Compare pbuf contents at specified offset with memory s2, both of length n
  *
  * @param p pbuf to compare
- * @param offset offset into p at wich to start comparing
+ * @param offset offset into p at which to start comparing
  * @param s2 buffer to compare
  * @param n length of buffer to compare
  * @return zero if equal, nonzero otherwise
@@ -1174,9 +1333,9 @@ pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n)
   /* return requested data if pbuf is OK */
   if ((q != NULL) && (q->len > start)) {
     u16_t i;
-    for(i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
       u8_t a = pbuf_get_at(q, start + i);
-      u8_t b = ((u8_t*)s2)[i];
+      u8_t b = ((const u8_t*)s2)[i];
       if (a != b) {
         return i+1;
       }
@@ -1202,12 +1361,10 @@ pbuf_memfind(struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset)
   u16_t i;
   u16_t max = p->tot_len - mem_len;
   if (p->tot_len >= mem_len + start_offset) {
-    for(i = start_offset; i <= max; ) {
+    for (i = start_offset; i <= max; i++) {
       u16_t plus = pbuf_memcmp(p, i, mem, mem_len);
       if (plus == 0) {
         return i;
-      } else {
-        i += plus;
       }
     }
   }

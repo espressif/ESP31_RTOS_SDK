@@ -25,7 +25,10 @@
 #ifndef __ESP_STA_H__
 #define __ESP_STA_H__
 
+#include "c_types.h"
 #include "queue.h"
+
+#include "esp_wifi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -156,6 +159,7 @@ struct bss_info {
     uint8 ssid[32];                     /**< SSID of AP */
     uint8 ssid_len;                     /**< SSID length */
     uint8 channel;                      /**< channel of AP */
+    uint8 chan_width;                   /**< channel width of AP, 0-ht20, 1-ht40U 2-ht40D */
     sint8 rssi;                         /**< single strength of AP */
     AUTH_MODE authmode;                 /**< authmode of AP */
     uint8 is_hidden;                    /**< SSID of current AP is hidden or not. */

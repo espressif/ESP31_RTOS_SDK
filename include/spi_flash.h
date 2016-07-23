@@ -25,6 +25,8 @@
 #ifndef __SPI_FLASH_H__
 #define __SPI_FLASH_H__
 
+#include "c_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
