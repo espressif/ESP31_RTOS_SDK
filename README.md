@@ -8,7 +8,7 @@ We suggest to choose **Crosstool-ng** as the compiler toolchain. Follow the inst
 
 Step 1. Install the required toolchain packages.
 ```
-sudo apt-get install git autoconf build-essential gperf bison flex texinfo libtool libncurses5-dev wget gawk libc6-dev-i386 python-serial libexpat-dev
+sudo apt-get install git autoconf build-essential gperf bison flex texinfo libtool libncurses5-dev wget gawk libc6-dev-i386 python-serial libexpat-dev libtool-bin
 ```
 Step 2. Create a directory (e.g./opt/Espressif) to store the toolchain. 
 ```	
